@@ -81,4 +81,8 @@ class paper(base_ff):
 
         test_loss, test_acc = model.evaluate(test_images, test_labels, verbose=2)
 
+        model_name = 'conv_%d-pool_%d-fc_%d-haspool_%s' % (nconv, npool, nfc, has_pool)
+
+        model.save('/content/trained_models/%s' % model_name)
+
         return test_acc
