@@ -73,9 +73,9 @@ class paper(base_ff):
             print(ex)
             return 0
 
-        sgd = tf.keras.optimizers.SGD(learning_rate=0.01)
+        adam = tf.keras.optimizers.Adam(learning_rate=0.01)
 
-        model.compile(loss='sparse_categorical_crossentropy', optimizer=sgd, metrics=['accuracy'])
+        model.compile(loss='sparse_categorical_crossentropy', optimizer=adam, metrics=['accuracy'])
 
         model.fit(train_images, train_labels, epochs=70, validation_data=(validation_images, validation_labels))
 
@@ -83,6 +83,6 @@ class paper(base_ff):
 
         model_name = 'conv_%d-pool_%d-fc_%d-haspool_%s' % (nconv, npool, nfc, has_pool)
 
-        model.save('/content/trained_models/%s' % model_name)
+        model.save('/pesquisa/trained_models/%s' % model_name)
 
         return test_acc
