@@ -10,7 +10,7 @@ class paper(base_ff):
     def __init__(self):
         super().__init__()
 
-    def build_model(self, nconv, npool, nfc, has_pool, train_images, train_labels, \
+    def build_model(self, path, nconv, npool, nfc, has_pool, train_images, train_labels, \
             validation_images, validation_labels):
         # num de filtros
         filter_size = 32
@@ -97,7 +97,7 @@ class paper(base_ff):
             model = models.load_model(path)
         else:
             print('Model ainda não foi treinado.')
-            model = self.build_model(nconv, npool, nfc, has_pool, \
+            model = self.build_model(path, nconv, npool, nfc, has_pool, \
                 train_images, train_labels, validation_images, validation_labels)
 
         if model:
