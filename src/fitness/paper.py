@@ -2,37 +2,19 @@ from fitness.base_ff_classes.base_ff import base_ff
 from tensorflow.keras import datasets, layers, models
 import tensorflow as tf
 import re
+import os
 
 
 class paper(base_ff):
 
     def __init__(self):
         super().__init__()
-        
-    def evaluate(self, ind, **kwargs):
-        
-        print('\nFENOTIPO: %s\n' % ind.phenotype)
 
-        # Capturando os parametros do fenotipo
-        nconv, npool, nfc = [int(i) for i in re.findall('\d+', ind.phenotype)]
-        has_pool = 'pool' in ind.phenotype
-        
+    def build_model(self, nconv, npool, nfc, has_pool, train_images, train_labels, \
+            validation_images, validation_labels):
         # num de filtros
         filter_size = 32
         nfilter = 1 # comeca com 1 pois logo abaixo ja adiciono uma convolucao
-
-        # Carregando dataset
-        (train_images, train_labels), (test_images, test_labels) = datasets.cifar10.load_data()
-
-        # Normalizando
-        train_images = train_images / 255.0
-        test_images = test_images / 255.0
-
-        # Dividindo dataset em validacao (80%) e testes (20%)
-        validation_images = test_images[:8000]
-        validation_labels = test_labels[:8000]
-        test_images = test_images[8000:]
-        test_labels = test_labels[8000:]
 
         # Iniciando o modelo da RN
         model = models.Sequential()
@@ -71,7 +53,7 @@ class paper(base_ff):
 
         except Exception as ex:
             print(ex)
-            return 0
+            return None
 
         adam = tf.keras.optimizers.Adam(learning_rate=0.01)
 
@@ -79,10 +61,47 @@ class paper(base_ff):
 
         model.fit(train_images, train_labels, epochs=70, validation_data=(validation_images, validation_labels))
 
-        test_loss, test_acc = model.evaluate(test_images, test_labels, verbose=2)
+        model.save(path)
+
+        return model
+        
+    def evaluate(self, ind, **kwargs):
+        
+        print('\nFENOTIPO: %s\n' % ind.phenotype)
+
+        # Capturando os parametros do fenotipo
+        nconv, npool, nfc = [int(i) for i in re.findall('\d+', ind.phenotype)]
+        has_pool = 'pool' in ind.phenotype
+
+        # Carregando dataset
+        (train_images, train_labels), (test_images, test_labels) = datasets.cifar10.load_data()
+
+        # Normalizando
+        train_images = train_images / 255.0
+        test_images = test_images / 255.0
+
+        # Dividindo dataset em validacao (80%) e testes (20%)
+        validation_images = test_images[:8000]
+        validation_labels = test_labels[:8000]
+        test_images = test_images[8000:]
+        test_labels = test_labels[8000:]
 
         model_name = 'conv_%d-pool_%d-fc_%d-haspool_%s' % (nconv, npool, nfc, has_pool)
+        path = '/pesquisa/trained_models/%s' % model_name
 
-        model.save('/pesquisa/trained_models/%s' % model_name)
+        model = None
 
-        return test_acc
+        # Caso o modelo já tenha sido treinado, carrego seus pesos.
+        if os.path.isdir(path):
+            print('Model já foi treinado. Carrengando.')
+            model = models.load_model(path)
+        else:
+            print('Model ainda não foi treinado.')
+            model = self.build_model(nconv, npool, nfc, has_pool, \
+                train_images, train_labels, validation_images, validation_labels)
+
+        if model:
+            test_loss, test_acc = model.evaluate(test_images, test_labels, verbose=2)
+            return test_acc
+        else:
+            return 0
