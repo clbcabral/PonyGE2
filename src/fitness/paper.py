@@ -81,7 +81,7 @@ class paper(base_ff):
 
         model.compile(loss='sparse_categorical_crossentropy', optimizer=optimizer, metrics=['accuracy'])
 
-        if os.path.isdir(path):
+        if os.path.isfile('%s.index' % path):
             print('Model já foi treinado. Carrengando pesos...')
             model.load_weights(path)
         else:
