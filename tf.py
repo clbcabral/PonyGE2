@@ -15,16 +15,27 @@ test_labels = test_labels[8000:]
 model = models.Sequential()
 model.add(layers.Conv2D(32, (3, 3), activation='relu', input_shape=(32, 32, 3)))
 model.add(layers.Conv2D(32, (3, 3), activation='relu'))
+model.add(layers.MaxPooling2D(pool_size=(2, 2), strides=(1, 1)))
 model.add(layers.Conv2D(64, (3, 3), activation='relu'))
 model.add(layers.Conv2D(64, (3, 3), activation='relu'))
+model.add(layers.MaxPooling2D(pool_size=(2, 2), strides=(1, 1)))
 model.add(layers.Conv2D(128, (3, 3), activation='relu'))
 model.add(layers.Conv2D(128, (3, 3), activation='relu'))
+model.add(layers.MaxPooling2D(pool_size=(2, 2), strides=(1, 1)))
+model.add(layers.Dense(256, activation='relu'))
 model.add(layers.Flatten())
 model.add(layers.Dense(10, activation='softmax'))
 
-model.compile(loss='sparse_categorical_crossentropy', optimizer='sgd', metrics=['accuracy'])
+adam = tf.keras.optimizers.Adam(learning_rate=0.001)
 
-model.fit(train_images, train_labels, epochs=1, batch_size=128, 
+model.compile(loss='sparse_categorical_crossentropy', optimizer=adam, metrics=['accuracy'])
+
+model.fit(train_images, train_labels, epochs=70, batch_size=128, 
     validation_data=(validation_images, validation_labels))
 
+# model.save_weights('./pesos')
+# model.load_weights('./pesos')
+
 test_loss, test_acc = model.evaluate(test_images, test_labels, verbose=2)
+
+print(test_acc)

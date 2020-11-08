@@ -9,9 +9,31 @@ class paper(base_ff):
 
     def __init__(self):
         super().__init__()
+        
+    def evaluate(self, ind, **kwargs):
+        
+        print('\nFENOTIPO: %s\n' % ind.phenotype)
 
-    def build_model(self, path, nconv, npool, nfc, has_pool, train_images, train_labels, \
-            validation_images, validation_labels):
+        # Capturando os parametros do fenotipo
+        nconv, npool, nfc = [int(i) for i in re.findall('\d+', ind.phenotype)]
+        has_pool = 'pool' in ind.phenotype
+
+        # Carregando dataset
+        (train_images, train_labels), (test_images, test_labels) = datasets.cifar10.load_data()
+
+        # Normalizando
+        train_images = train_images / 255.0
+        test_images = test_images / 255.0
+
+        # Dividindo dataset em validacao (80%) e testes (20%)
+        validation_images = test_images[:8000]
+        validation_labels = test_labels[:8000]
+        test_images = test_images[8000:]
+        test_labels = test_labels[8000:]
+
+        model_name = 'conv_%d-pool_%d-fc_%d-haspool_%s' % (nconv, npool, nfc, has_pool)
+        path = '/pesquisa/trained_models/%s' % model_name
+
         # num de filtros
         filter_size = 32
         nfilter = 1 # comeca com 1 pois logo abaixo ja adiciono uma convolucao
@@ -39,7 +61,7 @@ class paper(base_ff):
 
                 # Adiciona o pooling somente se estiver no fenotipo.
                 if has_pool:
-                    model.add(layers.MaxPooling2D((2, 2)))
+                    model.add(layers.MaxPooling2D(pool_size=(2, 2), strides=(1, 1)))
 
             # fully connected
             for i in range(nfc):
@@ -53,55 +75,21 @@ class paper(base_ff):
 
         except Exception as ex:
             print(ex)
-            return None
-
-        adam = tf.keras.optimizers.Adam(learning_rate=0.01)
-
-        model.compile(loss='sparse_categorical_crossentropy', optimizer=adam, metrics=['accuracy'])
-
-        model.fit(train_images, train_labels, epochs=70, validation_data=(validation_images, validation_labels))
-
-        model.save(path)
-
-        return model
-        
-    def evaluate(self, ind, **kwargs):
-        
-        print('\nFENOTIPO: %s\n' % ind.phenotype)
-
-        # Capturando os parametros do fenotipo
-        nconv, npool, nfc = [int(i) for i in re.findall('\d+', ind.phenotype)]
-        has_pool = 'pool' in ind.phenotype
-
-        # Carregando dataset
-        (train_images, train_labels), (test_images, test_labels) = datasets.cifar10.load_data()
-
-        # Normalizando
-        train_images = train_images / 255.0
-        test_images = test_images / 255.0
-
-        # Dividindo dataset em validacao (80%) e testes (20%)
-        validation_images = test_images[:8000]
-        validation_labels = test_labels[:8000]
-        test_images = test_images[8000:]
-        test_labels = test_labels[8000:]
-
-        model_name = 'conv_%d-pool_%d-fc_%d-haspool_%s' % (nconv, npool, nfc, has_pool)
-        path = '/pesquisa/trained_models/%s' % model_name
-
-        model = None
-
-        # Caso o modelo já tenha sido treinado, carrego seus pesos.
-        if os.path.isdir(path):
-            print('Model já foi treinado. Carrengando.')
-            model = models.load_model(path)
-        else:
-            print('Model ainda não foi treinado.')
-            model = self.build_model(path, nconv, npool, nfc, has_pool, \
-                train_images, train_labels, validation_images, validation_labels)
-
-        if model:
-            test_loss, test_acc = model.evaluate(test_images, test_labels, verbose=2)
-            return test_acc
-        else:
             return 0
+
+        optimizer = tf.keras.optimizers.Adam(learning_rate=0.001)
+
+        model.compile(loss='sparse_categorical_crossentropy', optimizer=optimizer, metrics=['accuracy'])
+
+        if os.path.isdir(path):
+            print('Model já foi treinado. Carrengando pesos...')
+            model.load_weights(path)
+        else:
+            print('Model ainda não foi treinado. Treinando...')
+            model.fit(train_images, train_labels, epochs=70, batch_size=128, 
+                validation_data=(validation_images, validation_labels))
+            model.save_weights(path)
+
+        test_loss, test_acc = model.evaluate(test_images, test_labels, verbose=2)
+
+        return test_acc
