@@ -7,6 +7,8 @@ import os
 
 class paper(base_ff):
 
+    maximise = True
+
     def __init__(self):
         super().__init__()
         
