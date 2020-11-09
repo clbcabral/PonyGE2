@@ -1,5 +1,6 @@
 from fitness.base_ff_classes.base_ff import base_ff
 from tensorflow.keras import datasets, layers, models
+from sklearn.model_selection import train_test_split
 import tensorflow as tf
 import re
 import os
@@ -23,15 +24,12 @@ class paper(base_ff):
         # Carregando dataset
         (train_images, train_labels), (test_images, test_labels) = datasets.cifar10.load_data()
 
+        validation_images, test_images, validation_labels, test_labels = train_test_split(test_images, test_labels, test_size=0.33, random_state=42)
+
         # Normalizando
         train_images = train_images / 255.0
         test_images = test_images / 255.0
-
-        # Dividindo dataset em validacao (80%) e testes (20%)
-        validation_images = test_images[:8000]
-        validation_labels = test_labels[:8000]
-        test_images = test_images[8000:]
-        test_labels = test_labels[8000:]
+        validation_images = validation_images / 255.0
 
         model_name = 'conv_%d-pool_%d-fc_%d-haspool_%s' % (nconv, npool, nfc, has_pool)
         path = '/pesquisa/trained_models/%s' % model_name
@@ -58,12 +56,14 @@ class paper(base_ff):
                         filter_size *= 2
                         nfilter = 0
         
-                    model.add(layers.Conv2D(filter_size, (3, 3), activation='relu'))
+                    model.add(layers.Conv2D(filter_size, (3, 3), activation='relu', padding='same'))
                     nfilter += 1
 
                 # Adiciona o pooling somente se estiver no fenotipo.
                 if has_pool:
-                    model.add(layers.MaxPooling2D(pool_size=(2, 2), strides=(1, 1)))
+                    model.add(layers.MaxPooling2D(pool_size=(2, 2)))
+
+            model.add(layers.Flatten())
 
             # fully connected
             for i in range(nfc):
@@ -71,7 +71,6 @@ class paper(base_ff):
 
             # (((conv*3)None)*1)fc*0
             # (((conv*2)pool)*3)fc*2
-            model.add(layers.Flatten())
             model.add(layers.Dense(10, activation='softmax'))
             model.summary()
 
@@ -79,9 +78,7 @@ class paper(base_ff):
             print(ex)
             return 0
 
-        optimizer = tf.keras.optimizers.Adam(learning_rate=0.001)
-
-        model.compile(loss='sparse_categorical_crossentropy', optimizer=optimizer, metrics=['accuracy'])
+        model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
 
         if os.path.isfile('%s.index' % path):
             print('Model já foi treinado. Carrengando pesos...')
