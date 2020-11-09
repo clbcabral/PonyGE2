@@ -78,7 +78,7 @@ class paper(base_ff):
             print(ex)
             return 0
 
-        model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
+        model.compile(loss='sparse_categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
 
         if os.path.isfile('%s.index' % path):
             print('Model já foi treinado. Carrengando pesos...')
