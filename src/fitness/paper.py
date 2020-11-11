@@ -1,7 +1,6 @@
 from fitness.base_ff_classes.base_ff import base_ff
 from tensorflow.keras import datasets, layers, models
 from sklearn.model_selection import train_test_split
-from numba import cuda
 import re
 import os
 
@@ -90,9 +89,5 @@ class paper(base_ff):
             model.save_weights(path)
 
         test_loss, test_acc = model.evaluate(test_images, test_labels, verbose=2)
-
-        # Limpando GPU apos o treino.
-        device = cuda.get_current_device()
-        device.reset()
 
         return test_acc
