@@ -14,11 +14,14 @@ class paper(base_ff):
         
     def evaluate(self, ind, **kwargs):
         
-        print('\nFENOTIPO: %s\n' % ind.phenotype)
-
+        print('FENOTIPO: %s' % ind.phenotype)
+        
         # Capturando os parametros do fenotipo
         nconv, npool, nfc = [int(i) for i in re.findall('\d+', ind.phenotype)]
+        has_dropout = 'dropout' in ind.phenotype
+        has_batch_normalization = 'bnorm' in ind.phenotype
         has_pool = 'pool' in ind.phenotype
+        is_maxpool = 'max' in ind.phenotype
 
         # Carregando dataset
         (train_images, train_labels), (test_images, test_labels) = datasets.cifar10.load_data()
@@ -30,7 +33,7 @@ class paper(base_ff):
         test_images = test_images / 255.0
         validation_images = validation_images / 255.0
 
-        model_name = 'conv_%d-pool_%d-fc_%d-haspool_%s' % (nconv, npool, nfc, has_pool)
+        model_name = 'conv_%d-pool_%d-fc_%d-haspool_%s-dropout_%s-bnorm_%s-ismax_%s' % (nconv, npool, nfc, has_pool, has_dropout, has_batch_normalization, is_maxpool)
         path = '/pesquisa/trained_models/%s' % model_name
 
         # num de filtros
@@ -42,6 +45,9 @@ class paper(base_ff):
         model.add(layers.Conv2D(filter_size, (3, 3), activation='relu', input_shape=(32, 32, 3)))
 
         try:
+
+            if has_batch_normalization:
+                model.add(layers.BatchNormalization())
             
             # Pooling
             for i in range(npool):
@@ -56,11 +62,20 @@ class paper(base_ff):
                         nfilter = 0
         
                     model.add(layers.Conv2D(filter_size, (3, 3), activation='relu', padding='same'))
+
+                    if has_batch_normalization:
+                        model.add(layers.BatchNormalization())
+
                     nfilter += 1
 
                 # Adiciona o pooling somente se estiver no fenotipo.
                 if has_pool:
-                    model.add(layers.MaxPooling2D(pool_size=(2, 2)))
+                    if is_maxpool:
+                        model.add(layers.MaxPooling2D(pool_size=(2, 2)))
+                    else:
+                        model.add(layers.AvgPool2D(pool_size=(2, 2)))
+                    if has_dropout:
+                        model.add(layers.Dropout(0.25))
 
             model.add(layers.Flatten())
 
@@ -68,8 +83,10 @@ class paper(base_ff):
             for i in range(nfc):
                 model.add(layers.Dense(256, activation='relu'))
 
-            # (((conv*3)None)*1)fc*0
-            # (((conv*2)pool)*3)fc*2
+            # FENOTIPO: (((conv*1)bnorm-max-pool-)*1)fc*0
+            # FENOTIPO: (((conv*1)bnorm-max-pool-)*2)fc*0
+            # FENOTIPO: (((conv*1)bnorm-)*2)fc*0
+            # FENOTIPO: (((conv*3))*3)fc*2
             model.add(layers.Dense(10, activation='softmax'))
             model.summary()
 

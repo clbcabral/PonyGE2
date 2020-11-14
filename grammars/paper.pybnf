@@ -2,8 +2,11 @@
 <EXP_2>     ::= (<EXP_1>*<M>)
 <EXP_1>     ::= (<CONV><POOL>)
 <FC>        ::= fc*<K>
-<POOL>      ::= pool | ''
-<CONV>      ::= (conv*<N>)
+<POOL>      ::= <POOLTYPE>-pool-<DROPOUT> | ''
+<CONV>      ::= (conv*<N>)<BNORM>
+<DROPOUT>   ::= dropout | ''
+<BNORM>     ::= bnorm- | ''
+<POOLTYPE>  ::= max | avg
 <N>         ::= 1 | 2 | 3
 <K>         ::= 0 | 1 | 2
 <M>         ::= 1 | 2 | 3
