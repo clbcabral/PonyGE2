@@ -1,5 +1,5 @@
 from fitness.base_ff_classes.base_ff import base_ff
-from tensorflow.keras import datasets, layers, models
+from tensorflow.keras import datasets, layers, models, callbacks
 from sklearn.model_selection import train_test_split
 import re
 import os
@@ -101,8 +101,9 @@ class paper(base_ff):
             model.load_weights(path)
         else:
             print('Model ainda não foi treinado. Treinando...')
+            es = callbacks.EarlyStopping(monitor='val_loss', mode='min', verbose=1, patience=35)
             model.fit(train_images, train_labels, epochs=70, batch_size=128, 
-                validation_data=(validation_images, validation_labels))
+                validation_data=(validation_images, validation_labels), callbacks=[es])
             model.save_weights(path)
 
         test_loss, test_acc = model.evaluate(test_images, test_labels, verbose=2)

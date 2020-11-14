@@ -1,4 +1,4 @@
-from tensorflow.keras import datasets, layers, models
+from tensorflow.keras import datasets, layers, models, callbacks
 from sklearn.model_selection import train_test_split
 import tensorflow as tf
 
@@ -36,8 +36,10 @@ model.summary()
 
 model.compile(loss='sparse_categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
 
+es = callbacks.EarlyStopping(monitor='val_loss', mode='min', verbose=1)
+
 history = model.fit(train_images, train_labels, epochs=70, batch_size=128, 
-    validation_data=(validation_images, validation_labels))
+    validation_data=(validation_images, validation_labels), callbacks=[es])
 
 test_loss, test_acc = model.evaluate(test_images, test_labels, verbose=2)
 
