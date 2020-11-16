@@ -10,7 +10,7 @@ class paper(base_ff):
     maximise = True
 
     def __init__(self):
-        self.arquivo = datetime.now().strftime('../results/fenotipos-%d%m%Y-%H%M%S.csv')
+        self.arquivo = datetime.now().strftime('/pesquisa/fenotipos-%d%m%Y.csv')
         with open(self.arquivo, mode='w+') as file:
             writer = csv.DictWriter(file, fieldnames=['fenotipo', 'acuracia'])
             writer.writeheader()
