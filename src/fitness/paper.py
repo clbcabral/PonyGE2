@@ -21,7 +21,6 @@ class paper(base_ff):
         has_dropout = 'dropout' in ind.phenotype
         has_batch_normalization = 'bnorm' in ind.phenotype
         has_pool = 'pool' in ind.phenotype
-        is_maxpool = 'max' in ind.phenotype
 
         # Carregando dataset
         (train_images, train_labels), (test_images, test_labels) = datasets.cifar10.load_data()
@@ -33,7 +32,7 @@ class paper(base_ff):
         test_images = test_images / 255.0
         validation_images = validation_images / 255.0
 
-        model_name = 'conv_%d-pool_%d-fc_%d-haspool_%s-dropout_%s-bnorm_%s-ismax_%s' % (nconv, npool, nfc, has_pool, has_dropout, has_batch_normalization, is_maxpool)
+        model_name = 'conv_%d-pool_%d-fc_%d-haspool_%s-dropout_%s-bnorm_%s' % (nconv, npool, nfc, has_pool, has_dropout, has_batch_normalization)
         path = '/pesquisa/trained_models/%s' % model_name
 
         # num de filtros
@@ -70,10 +69,7 @@ class paper(base_ff):
 
                 # Adiciona o pooling somente se estiver no fenotipo.
                 if has_pool:
-                    if is_maxpool:
-                        model.add(layers.MaxPooling2D(pool_size=(2, 2)))
-                    else:
-                        model.add(layers.AvgPool2D(pool_size=(2, 2)))
+                    model.add(layers.MaxPooling2D(pool_size=(2, 2)))
                     if has_dropout:
                         model.add(layers.Dropout(0.25))
 
@@ -83,10 +79,6 @@ class paper(base_ff):
             for i in range(nfc):
                 model.add(layers.Dense(256, activation='relu'))
 
-            # FENOTIPO: (((conv*1)bnorm-max-pool-)*1)fc*0
-            # FENOTIPO: (((conv*1)bnorm-max-pool-)*2)fc*0
-            # FENOTIPO: (((conv*1)bnorm-)*2)fc*0
-            # FENOTIPO: (((conv*3))*3)fc*2
             model.add(layers.Dense(10, activation='softmax'))
             model.summary()
 
@@ -101,7 +93,7 @@ class paper(base_ff):
             model.load_weights(path)
         else:
             print('Model ainda não foi treinado. Treinando...')
-            es = callbacks.EarlyStopping(monitor='val_loss', mode='min', verbose=1, patience=35)
+            es = callbacks.EarlyStopping(monitor='val_accuracy', mode='max', verbose=1, patience=35)
             model.fit(train_images, train_labels, epochs=70, batch_size=128, 
                 validation_data=(validation_images, validation_labels), callbacks=[es])
             model.save_weights(path)
