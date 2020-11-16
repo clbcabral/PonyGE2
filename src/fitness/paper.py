@@ -1,8 +1,8 @@
 from fitness.base_ff_classes.base_ff import base_ff
-from tensorflow.keras import datasets, layers, models, callbacks
+from tensorflow.keras import datasets, layers, models, callbacks, optimizers
 from sklearn.model_selection import train_test_split
-import re
-import os
+from datetime import datetime
+import re, csv, os
 
 
 class paper(base_ff):
@@ -10,13 +10,16 @@ class paper(base_ff):
     maximise = True
 
     def __init__(self):
+        self.arquivo = datetime.now().strftime('../results/fenotipos-%d%m%Y-%H%M%S.csv')
+        with open(self.arquivo, mode='w+') as file:
+            writer = csv.DictWriter(file, fieldnames=['fenotipo', 'acuracia'])
+            writer.writeheader()
         super().__init__()
-        
+
     def evaluate(self, ind, **kwargs):
         
         print('FENOTIPO: %s' % ind.phenotype)
-        
-        # Capturando os parametros do fenotipo
+
         nconv, npool, nfc = [int(i) for i in re.findall('\d+', ind.phenotype)]
         has_dropout = 'dropout' in ind.phenotype
         has_batch_normalization = 'bnorm' in ind.phenotype
@@ -31,9 +34,6 @@ class paper(base_ff):
         train_images = train_images / 255.0
         test_images = test_images / 255.0
         validation_images = validation_images / 255.0
-
-        model_name = 'conv_%d-pool_%d-fc_%d-haspool_%s-dropout_%s-bnorm_%s' % (nconv, npool, nfc, has_pool, has_dropout, has_batch_normalization)
-        path = '/pesquisa/trained_models/%s' % model_name
 
         # num de filtros
         filter_size = 32
@@ -86,18 +86,31 @@ class paper(base_ff):
             print(ex)
             return 0
 
-        model.compile(loss='sparse_categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
+        opt = optimizers.Adam()
+        
+        model.compile(loss='sparse_categorical_crossentropy', optimizer=opt, metrics=['accuracy'])
 
-        if os.path.isfile('%s.index' % path):
-            print('Model já foi treinado. Carrengando pesos...')
-            model.load_weights(path)
-        else:
+        acuracia = None
+
+        with open(self.arquivo, mode='r') as file:
+            reader = csv.reader(file)
+            for row in reader:
+                if row[0] == ind.phenotype:
+                    acuracia = row[1]
+                    break
+        
+        if not acuracia:
+
             print('Model ainda não foi treinado. Treinando...')
+            
             es = callbacks.EarlyStopping(monitor='val_accuracy', mode='max', verbose=1, patience=35)
             model.fit(train_images, train_labels, epochs=70, batch_size=128, 
                 validation_data=(validation_images, validation_labels), callbacks=[es])
-            model.save_weights(path)
+                
+            _, acuracia = model.evaluate(test_images, test_labels, verbose=2)
 
-        test_loss, test_acc = model.evaluate(test_images, test_labels, verbose=2)
+            with open(self.arquivo, mode='a') as file:
+                writer = csv.writer(file)
+                writer.writerow([ind.phenotype, 0.0])
 
-        return test_acc
+        return acuracia
