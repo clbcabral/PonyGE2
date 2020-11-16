@@ -111,6 +111,6 @@ class paper(base_ff):
 
             with open(self.arquivo, mode='a') as file:
                 writer = csv.writer(file)
-                writer.writerow([ind.phenotype, 0.0])
+                writer.writerow([ind.phenotype, acuracia])
 
         return acuracia
