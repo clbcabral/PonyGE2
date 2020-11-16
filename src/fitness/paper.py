@@ -10,7 +10,7 @@ class paper(base_ff):
     maximise = True
 
     def __init__(self):
-        self.arquivo = datetime.now().strftime('/pesquisa/fenotipos-%d%m%Y.csv')
+        self.arquivo = datetime.now().strftime('../results/fenotipos-%d%m%Y.csv')
         with open(self.arquivo, mode='w+') as file:
             writer = csv.DictWriter(file, fieldnames=['fenotipo', 'acuracia'])
             writer.writeheader()
@@ -20,17 +20,11 @@ class paper(base_ff):
         
         print('FENOTIPO: %s' % ind.phenotype)
 
-        nconv, npool, nfc, nfcneuron = [0,0,0,0]
+        nconv, npool, nfc, nfcneuron = [int(i) for i in re.findall('\d+', ind.phenotype.split('lr-')[0])]
         has_dropout = 'dropout' in ind.phenotype
         has_batch_normalization = 'bnorm' in ind.phenotype
         has_pool = 'pool' in ind.phenotype
-        has_fc = 'fc' in ind.phenotype
         learning_rate = float(ind.phenotype.split('lr-')[1])
-
-        if not has_fc:
-            nconv, npool = [int(i) for i in re.findall('\d+', ind.phenotype.split('lr-')[0])]
-        else:
-            nconv, npool, nfc, nfcneuron = [int(i) for i in re.findall('\d+', ind.phenotype.split('lr-')[0])]
 
         # Carregando dataset
         (train_images, train_labels), (test_images, test_labels) = datasets.cifar10.load_data()
