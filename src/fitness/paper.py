@@ -20,10 +20,17 @@ class paper(base_ff):
         
         print('FENOTIPO: %s' % ind.phenotype)
 
-        nconv, npool, nfc = [int(i) for i in re.findall('\d+', ind.phenotype)]
+        nconv, npool, nfc, nfcneuron = [0,0,0,0]
         has_dropout = 'dropout' in ind.phenotype
         has_batch_normalization = 'bnorm' in ind.phenotype
         has_pool = 'pool' in ind.phenotype
+        has_fc = 'fc' in ind.phenotype
+        learning_rate = float(ind.phenotype.split('lr-')[1])
+
+        if not has_fc:
+            nconv, npool = [int(i) for i in re.findall('\d+', ind.phenotype.split('lr-')[0])]
+        else:
+            nconv, npool, nfc, nfcneuron = [int(i) for i in re.findall('\d+', ind.phenotype.split('lr-')[0])]
 
         # Carregando dataset
         (train_images, train_labels), (test_images, test_labels) = datasets.cifar10.load_data()
@@ -77,7 +84,7 @@ class paper(base_ff):
 
             # fully connected
             for i in range(nfc):
-                model.add(layers.Dense(256, activation='relu'))
+                model.add(layers.Dense(nfcneuron, activation='relu'))
 
             model.add(layers.Dense(10, activation='softmax'))
             model.summary()
@@ -86,7 +93,7 @@ class paper(base_ff):
             print(ex)
             return 0
 
-        opt = optimizers.Adam()
+        opt = optimizers.Adam(lr=learning_rate)
         
         model.compile(loss='sparse_categorical_crossentropy', optimizer=opt, metrics=['accuracy'])
 
