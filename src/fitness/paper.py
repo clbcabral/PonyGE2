@@ -1,7 +1,6 @@
 from fitness.base_ff_classes.base_ff import base_ff
 from tensorflow.keras import datasets, layers, models, callbacks, optimizers
 from sklearn.model_selection import train_test_split
-from datetime import datetime
 import re, csv, os
 
 
@@ -10,10 +9,7 @@ class paper(base_ff):
     maximise = True
 
     def __init__(self):
-        self.arquivo = datetime.now().strftime('../results/fenotipos-%d%m%Y.csv')
-        with open(self.arquivo, mode='w+') as file:
-            writer = csv.DictWriter(file, fieldnames=['fenotipo', 'acuracia'])
-            writer.writeheader()
+        self.arquivo = '../results/fenotipos.csv'
         super().__init__()
 
     def evaluate(self, ind, **kwargs):
