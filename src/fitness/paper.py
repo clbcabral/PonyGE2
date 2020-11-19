@@ -1,6 +1,7 @@
 from fitness.base_ff_classes.base_ff import base_ff
 from tensorflow.keras import datasets, layers, models, callbacks, optimizers
 from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import LabelBinarizer
 import re, csv, os
 
 
@@ -9,7 +10,7 @@ class paper(base_ff):
     maximise = True
 
     def __init__(self):
-        self.arquivo = '../results/fenotipos.csv'
+        self.arquivo = '/pesquisa/fenotipos.csv'
         super().__init__()
 
     def evaluate(self, ind, **kwargs):
@@ -32,13 +33,17 @@ class paper(base_ff):
         test_images = test_images / 255.0
         validation_images = validation_images / 255.0
 
+        lb = LabelBinarizer()
+        train_labels = lb.fit_transform(train_labels)
+        validation_labels = lb.transform(validation_labels)
+        test_labels = lb.transform(test_labels)
+
         # num de filtros
         filter_size = 32
-        nfilter = 1 # comeca com 1 pois logo abaixo ja adiciono uma convolucao
+        nfilter = 0
 
         # Iniciando o modelo da RN
         model = models.Sequential()
-        model.add(layers.Conv2D(filter_size, (3, 3), activation='relu', input_shape=(32, 32, 3)))
 
         try:
 
@@ -47,22 +52,21 @@ class paper(base_ff):
             
             # Pooling
             for i in range(npool):
-                n = nconv if i != 0 else nconv - 1
-        
+                
                 # Convolucoes
-                for j in range(n):
+                for j in range(nconv):
+
+                    model.add(layers.Conv2D(filter_size, (3, 3), activation='relu', input_shape=(32, 32, 3)))
         
+                    nfilter += 1
+
                     # Numero de filtros duplica a cada duas Convolucoes
                     if nfilter == 2:
                         filter_size *= 2
                         nfilter = 0
-        
-                    model.add(layers.Conv2D(filter_size, (3, 3), activation='relu', padding='same'))
 
                     if has_batch_normalization:
                         model.add(layers.BatchNormalization())
-
-                    nfilter += 1
 
                 # Adiciona o pooling somente se estiver no fenotipo.
                 if has_pool:
@@ -74,7 +78,11 @@ class paper(base_ff):
 
             # fully connected
             for i in range(nfc):
-                model.add(layers.Dense(nfcneuron, activation='relu'))
+                model.add(layers.Dense(nfcneuron))
+                model.add(layers.Activation('relu'))
+
+            if has_dropout:
+                model.add(layers.Dropout(0.5))
 
             model.add(layers.Dense(10, activation='softmax'))
             model.summary()
@@ -85,7 +93,7 @@ class paper(base_ff):
 
         opt = optimizers.Adam(lr=learning_rate)
         
-        model.compile(loss='sparse_categorical_crossentropy', optimizer=opt, metrics=['accuracy'])
+        model.compile(loss='categorical_crossentropy', optimizer=opt, metrics=['accuracy'])
 
         acuracia = None
 
@@ -100,7 +108,8 @@ class paper(base_ff):
 
             print('Model ainda não foi treinado. Treinando...')
             
-            es = callbacks.EarlyStopping(monitor='val_accuracy', mode='max', verbose=1, patience=35)
+            es = callbacks.EarlyStopping(monitor='val_accuracy', mode='max', verbose=1, patience=35, baseline=0.5)
+
             model.fit(train_images, train_labels, epochs=70, batch_size=128, 
                 validation_data=(validation_images, validation_labels), callbacks=[es])
                 
