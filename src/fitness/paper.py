@@ -46,9 +46,6 @@ class paper(base_ff):
         model = models.Sequential()
 
         try:
-
-            if has_batch_normalization:
-                model.add(layers.BatchNormalization())
             
             # Pooling
             for i in range(npool):
