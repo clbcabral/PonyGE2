@@ -46,15 +46,15 @@ class paper(base_ff):
         model = models.Sequential()
 
         try:
-            
+        
             # Pooling
             for i in range(npool):
-                
+        
                 # Convolucoes
                 for j in range(nconv):
-
-                    model.add(layers.Conv2D(filter_size, (3, 3), activation='relu', input_shape=(32, 32, 3)))
         
+                    model.add(layers.Conv2D(filter_size, (3, 3), activation='relu', padding='same', input_shape=(32, 32, 3)))
+
                     nfilter += 1
 
                     # Numero de filtros duplica a cada duas Convolucoes
