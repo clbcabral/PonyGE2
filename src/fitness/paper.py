@@ -92,13 +92,13 @@ class paper(base_ff):
         
         model.compile(loss='categorical_crossentropy', optimizer=opt, metrics=['accuracy'])
 
-        acuracia = None
+        acuracia = 0.0
 
         with open(self.arquivo, mode='r') as file:
             reader = csv.reader(file)
             for row in reader:
                 if row[0] == ind.phenotype:
-                    acuracia = row[1]
+                    acuracia = float(row[1])
                     break
         
         if not acuracia:
