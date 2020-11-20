@@ -105,7 +105,7 @@ class paper(base_ff):
 
             print('Model ainda não foi treinado. Treinando...')
             
-            es = callbacks.EarlyStopping(monitor='val_accuracy', mode='max', verbose=1, patience=35, baseline=0.5)
+            es = callbacks.EarlyStopping(monitor='val_accuracy', mode='max', verbose=1, patience=10, baseline=0.5)
 
             model.fit(train_images, train_labels, epochs=70, batch_size=128, 
                 validation_data=(validation_images, validation_labels), callbacks=[es])
