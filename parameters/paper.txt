@@ -5,6 +5,7 @@ GENERATIONS:            30
 POPULATION_SIZE:        50
 CROSSOVER_PROBABILITY:  0.75
 MUTATION:               int_flip_per_codon
+MUTATION_PROBABILITY:   0.01
 TOURNAMENT_SIZE:        2
 ELITE_SIZE:  		    1
 SELECTION:              tournament
