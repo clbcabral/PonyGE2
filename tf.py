@@ -2,6 +2,7 @@ from tensorflow.keras import datasets, layers, models, callbacks, optimizers
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelBinarizer
+import matplotlib.pyplot as plt
 import re
 
 
@@ -86,18 +87,35 @@ def evaluate(phenotype):
         
     # es = callbacks.EarlyStopping(monitor='val_accuracy', mode='max', verbose=1, patience=35, baseline=0.5)
     
-    # model.fit(train_images, train_labels, epochs=70, batch_size=128, 
+    # history = model.fit(train_images, train_labels, epochs=70, batch_size=128, 
     #     validation_data=(validation_images, validation_labels), callbacks=[es])
 
     datagen = ImageDataGenerator(zoom_range=0.2, horizontal_flip=True)
 
     batch_size = 128
     
-    model.fit(datagen.flow(train_images, train_labels, batch_size=batch_size),
+    history = model.fit(datagen.flow(train_images, train_labels, batch_size=batch_size),
             steps_per_epoch=train_images.shape[0]//batch_size, 
             epochs=400, 
             validation_data=(validation_images, validation_labels), 
             verbose=1)
+
+    # summarize history for accuracy
+    plt.plot(history.history['accuracy'])
+    plt.plot(history.history['val_accuracy'])
+    plt.title('model accuracy')
+    plt.ylabel('accuracy')
+    plt.xlabel('epoch')
+    plt.legend(['train', 'test'], loc='upper left')
+    plt.show()
+    # summarize history for loss
+    plt.plot(history.history['loss'])
+    plt.plot(history.history['val_loss'])
+    plt.title('model loss')
+    plt.ylabel('loss')
+    plt.xlabel('epoch')
+    plt.legend(['train', 'test'], loc='upper left')
+    plt.show()
         
     _, acuracia = model.evaluate(test_images, test_labels, verbose=2)
     
