@@ -1,4 +1,5 @@
 from tensorflow.keras import datasets, layers, models, callbacks, optimizers
+from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelBinarizer
 import re
@@ -83,14 +84,24 @@ def evaluate(phenotype):
     
     model.compile(loss='categorical_crossentropy', optimizer=opt, metrics=['accuracy'])
         
-    es = callbacks.EarlyStopping(monitor='val_accuracy', mode='max', verbose=1, patience=35, baseline=0.5)
+    # es = callbacks.EarlyStopping(monitor='val_accuracy', mode='max', verbose=1, patience=35, baseline=0.5)
     
-    model.fit(train_images, train_labels, epochs=70, batch_size=128, 
-        validation_data=(validation_images, validation_labels), callbacks=[es])
+    # model.fit(train_images, train_labels, epochs=70, batch_size=128, 
+    #     validation_data=(validation_images, validation_labels), callbacks=[es])
+
+    datagen = ImageDataGenerator(zoom_range=0.2, horizontal_flip=True)
+
+    batch_size = 128
+    
+    model.fit(datagen.flow(train_images, train_labels, batch_size=batch_size),
+            steps_per_epoch=train_images.shape[0]//batch_size, 
+            epochs=400, 
+            validation_data=(validation_images, validation_labels), 
+            verbose=1)
         
     _, acuracia = model.evaluate(test_images, test_labels, verbose=2)
     
     return acuracia
 
 
-evaluate('(((conv*2)bnorm-pool-)*3)fc*2*256*lr-0.01')
+evaluate('(((conv*3)bnorm-pool-dropout)*3)fc*1*512*lr-0.001')
