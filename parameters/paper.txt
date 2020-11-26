@@ -8,7 +8,8 @@ MUTATION:               int_flip_per_codon
 MUTATION_PROBABILITY:   0.01
 TOURNAMENT_SIZE:        2
 ELITE_SIZE:  		    1
-SELECTION:              tournament
+SELECTION:              nsga2_selection
+REPLACEMENT:            nsga2_replacement
 
 
 #CACHE:                  True
