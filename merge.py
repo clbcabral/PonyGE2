@@ -9,14 +9,15 @@ for arquivo in arquivos:
     with open(arquivo, mode='r') as aqv:
         leitor = csv.DictReader(aqv)
         for linha in leitor:
-            fenotipo = linha['fenotipo']
-            acuracia = linha['acuracia']
-            if fenotipo not in mapa or acuracia > mapa[fenotipo]:
-                mapa[fenotipo] = acuracia
+            fenotipo = linha['phenotype']
+            acuracia = linha['accuracy']
+            f1_score = linha['f1_score']
+            if fenotipo not in mapa or acuracia > mapa[fenotipo][0]:
+                mapa[fenotipo] = (acuracia, f1_score)
 
 with open('resultado.csv', mode='w+') as aqv:
-    escritor = csv.DictWriter(aqv, fieldnames=['fenotipo', 'acuracia'])
+    escritor = csv.DictWriter(aqv, fieldnames=['phenotype', 'accuracy', 'f1_score'])
     escritor.writeheader()
     for fenotipo in mapa:
-        acuracia = mapa[fenotipo]
-        escritor.writerow({'fenotipo': fenotipo, 'acuracia': acuracia})
+        acuracia, f1_score = mapa[fenotipo]
+        escritor.writerow({'phenotype': fenotipo, 'accuracy': acuracia, 'f1_score': f1_score})
