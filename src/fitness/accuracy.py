@@ -174,4 +174,4 @@ class accuracy(base_ff):
 
         print(accuracy, f1_score)
 
-        return accuracy, f1_score
+        return accuracy
