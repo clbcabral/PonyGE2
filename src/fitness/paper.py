@@ -5,7 +5,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelBinarizer
 from airtable import Airtable
 import numpy as np
-import re, csv
+import re, csv, os
 
 
 class paper(base_ff):
@@ -15,7 +15,7 @@ class paper(base_ff):
 
     def __init__(self):
         super().__init__()
-        self.air = Airtable('appA6WSir5qbGBpEs', 'Wait', 'keyZPCaq4qW9kfaaK')
+        self.air = Airtable('appA6WSir5qbGBpEs', 'Wait', os.environ['AIRTABLE_API'])
         self.num_obj = 2
         fit = base_ff()
         fit.maximise = True
@@ -178,7 +178,7 @@ class paper(base_ff):
             else:
                 accuracy, accuracy_sd, f1_score, f1_score_sd = 0.0, 0.0, 0.0, 0.0
 
-            self.save_metrics(ind.phenotype, accuracy, f1_score)
+            self.save_metrics(ind.phenotype, accuracy, accuracy_sd, f1_score, f1_score_sd)
 
         print(accuracy, accuracy_sd, f1_score, f1_score_sd)
 
