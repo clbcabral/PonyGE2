@@ -9,15 +9,23 @@ for arquivo in arquivos:
     with open(arquivo, mode='r') as aqv:
         leitor = csv.DictReader(aqv)
         for linha in leitor:
-            fenotipo = linha['phenotype']
-            acuracia = linha['accuracy']
+            phenotype = linha['phenotype']
+            accuracy = linha['accuracy']
+            accuracy_sd = linha['accuracy_sd']
             f1_score = linha['f1_score']
-            if fenotipo not in mapa or acuracia > mapa[fenotipo][0]:
-                mapa[fenotipo] = (acuracia, f1_score)
+            f1_score_sd = linha['f1_score_sd']
+            if phenotype not in mapa or accuracy > mapa[phenotype][0]:
+                mapa[phenotype] = (accuracy, accuracy_sd, f1_score, f1_score_sd)
 
 with open('resultado.csv', mode='w+') as aqv:
-    escritor = csv.DictWriter(aqv, fieldnames=['phenotype', 'accuracy', 'f1_score'])
+    escritor = csv.DictWriter(aqv, fieldnames=['phenotype', 'accuracy', 'accuracy_sd', 'f1_score', 'f1_score_sd'])
     escritor.writeheader()
-    for fenotipo in mapa:
-        acuracia, f1_score = mapa[fenotipo]
-        escritor.writerow({'phenotype': fenotipo, 'accuracy': acuracia, 'f1_score': f1_score})
+    for phenotype in mapa:
+        accuracy, accuracy_sd, f1_score, f1_score_sd = mapa[phenotype]
+        escritor.writerow({
+            'phenotype': phenotype, 
+            'accuracy': accuracy, 
+            'accuracy_sd': accuracy_sd, 
+            'f1_score': f1_score, 
+            'f1_score_sd': f1_score_sd
+        })

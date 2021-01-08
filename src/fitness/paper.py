@@ -155,7 +155,7 @@ class paper(base_ff):
             accuracies.append(accuracy)
             f1_scores.append(f1_score)
 
-            if i == 0 and accuracy < 0.5:
+            if i == 0 and accuracy < 0.4:
                 break
 
         return np.mean(accuracies), np.std(accuracies), np.mean(f1_scores), np.std(f1_scores)
