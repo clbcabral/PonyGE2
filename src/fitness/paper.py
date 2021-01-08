@@ -145,10 +145,10 @@ class paper(base_ff):
             print('Trainning %s of 3' % (i + 1))
 
             # Early Stop when bad networks are identified        
-            # es = callbacks.EarlyStopping(monitor='val_accuracy', mode='max', verbose=1, patience=10, baseline=0.5)
+            es = callbacks.EarlyStopping(monitor='val_accuracy', mode='max', verbose=1, patience=10, baseline=0.5)
 
-            model.fit(train_images, train_labels, epochs=10, batch_size=128, 
-                validation_data=(validation_images, validation_labels))#, callbacks=[es])
+            model.fit(train_images, train_labels, epochs=70, batch_size=128, 
+                validation_data=(validation_images, validation_labels), callbacks=[es])
             
             loss, accuracy, f1_score = model.evaluate(test_images, test_labels, verbose=1)
 
