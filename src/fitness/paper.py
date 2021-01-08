@@ -52,7 +52,7 @@ class paper(base_ff):
         return accuracy, accuracy_sd, f1_score, f1_score_sd
 
     def save_metrics(self, phenotype, accuracy, accuracy_sd, f1_score, f1_score_sd):
-        air.insert({
+        self.air.insert({
             'phenotype': phenotype, 
             'accuracy': accuracy, 
             'accuracy_sd': accuracy_sd, 
