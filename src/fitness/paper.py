@@ -38,23 +38,23 @@ class paper(base_ff):
         
         return train_images, train_labels, test_images, test_labels, validation_images, validation_labels
 
-        def get_metrics(self, phenotype):
-            accuracy, accuracy_sd, f1_score, f1_score_sd = None, None, None, None
-            with open(self.filename, mode='r') as file:
-                reader = csv.reader(file)
-                for row in reader:
-                    if row[0] == phenotype:
-                        accuracy = float(row[1])
-                        accuracy_sd = float(row[2])
-                        f1_score = float(row[3])
-                        f1_score_sd = float(row[4])
-                        break
-            return accuracy, accuracy_sd, f1_score, f1_score_sd
+    def get_metrics(self, phenotype):
+        accuracy, accuracy_sd, f1_score, f1_score_sd = None, None, None, None
+        with open(self.filename, mode='r') as file:
+            reader = csv.reader(file)
+            for row in reader:
+                if row[0] == phenotype:
+                    accuracy = float(row[1])
+                    accuracy_sd = float(row[2])
+                    f1_score = float(row[3])
+                    f1_score_sd = float(row[4])
+                    break
+        return accuracy, accuracy_sd, f1_score, f1_score_sd
 
-        def save_metrics(self, phenotype, accuracy, accuracy_sd, f1_score, f1_score_sd):
-            with open(self.filename, mode='a') as file:
-                writer = csv.writer(file)
-                writer.writerow([phenotype, accuracy, accuracy_sd, f1_score, f1_score_sd])
+    def save_metrics(self, phenotype, accuracy, accuracy_sd, f1_score, f1_score_sd):
+        with open(self.filename, mode='a') as file:
+            writer = csv.writer(file)
+            writer.writerow([phenotype, accuracy, accuracy_sd, f1_score, f1_score_sd])
 
     def build_model(self, phenotype):
 
