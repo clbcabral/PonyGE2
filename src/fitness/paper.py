@@ -3,7 +3,6 @@ from tensorflow.keras import datasets, layers, models, callbacks, optimizers
 from tensorflow.keras import backend as K 
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelBinarizer
-from airtable import Airtable
 import numpy as np
 import re, csv, os
 
@@ -15,7 +14,7 @@ class paper(base_ff):
 
     def __init__(self):
         super().__init__()
-        self.air = Airtable('appA6WSir5qbGBpEs', 'Wait', os.environ['AIRTABLE_API'])
+        self.filename = '/pesquisa/phenotypes.csv'
         self.num_obj = 2
         fit = base_ff()
         fit.maximise = True
@@ -39,26 +38,23 @@ class paper(base_ff):
         
         return train_images, train_labels, test_images, test_labels, validation_images, validation_labels
 
-    def get_metrics(self, phenotype):
-        accuracy, accuracy_sd, f1_score, f1_score_sd = None, None, None, None
-        res = self.air.search('phenotype', phenotype)
-        if len(res):
-            res = res[0]
-            fields = res['fields']
-            accuracy = fields['accuracy']
-            accuracy_sd = fields['accuracy_sd']
-            f1_score = fields['f1_score']
-            f1_score_sd = fields['f1_score_sd']
-        return accuracy, accuracy_sd, f1_score, f1_score_sd
+        def get_metrics(self, phenotype):
+            accuracy, accuracy_sd, f1_score, f1_score_sd = None, None, None, None
+            with open(self.filename, mode='r') as file:
+                reader = csv.reader(file)
+                for row in reader:
+                    if row[0] == phenotype:
+                        accuracy = float(row[1])
+                        accuracy_sd = float(row[2])
+                        f1_score = float(row[3])
+                        f1_score_sd = float(row[4])
+                        break
+            return accuracy, accuracy_sd, f1_score, f1_score_sd
 
-    def save_metrics(self, phenotype, accuracy, accuracy_sd, f1_score, f1_score_sd):
-        self.air.insert({
-            'phenotype': phenotype, 
-            'accuracy': accuracy, 
-            'accuracy_sd': accuracy_sd, 
-            'f1_score': f1_score,
-            'f1_score_sd': f1_score_sd,
-        })
+        def save_metrics(self, phenotype, accuracy, accuracy_sd, f1_score, f1_score_sd):
+            with open(self.filename, mode='a') as file:
+                writer = csv.writer(file)
+                writer.writerow([phenotype, accuracy, accuracy_sd, f1_score, f1_score_sd])
 
     def build_model(self, phenotype):
 
@@ -158,6 +154,9 @@ class paper(base_ff):
 
             accuracies.append(accuracy)
             f1_scores.append(f1_score)
+
+            if i == 0 and accuracy < 0.5:
+                break
 
         return np.mean(accuracies), np.std(accuracies), np.mean(f1_scores), np.std(f1_scores)
 
