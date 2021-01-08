@@ -1,7 +1,6 @@
 from fitness.base_ff_classes.base_ff import base_ff
 from tensorflow.keras import datasets, layers, models, callbacks, optimizers
 from tensorflow.keras import backend as K 
-from tensorflow.keras.utils import to_categorical
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelBinarizer
 import numpy as np
@@ -25,15 +24,17 @@ class paper(base_ff):
     def load_data(self):
         # Load dataset
         (train_images, train_labels), (test_images, test_labels) = datasets.cifar10.load_data()
-        validation_images, test_images, validation_labels, test_labels = train_test_split(test_images, test_labels, test_size=0.33, random_state=42)
+        validation_images, test_images, validation_labels, test_labels = train_test_split(test_images, test_labels, test_size=0.2, random_state=42)
+        
         # Normalizing
-        train_images = train_images / 255.0
-        test_images = test_images / 255.0
-        validation_images = validation_images / 255.0
+        train_images = train_images.astype("float") / 255.0
+        test_images = test_images.astype("float") / 255.0
+        validation_images = validation_images.astype("float") / 255.0
 
-        train_labels = to_categorical(train_labels)
-        validation_labels = to_categorical(validation_labels)
-        test_labels = to_categorical(test_labels)
+        lb = LabelBinarizer()
+        train_labels = lb.fit_transform(train_labels)
+        validation_labels = lb.transform(validation_labels)
+        test_labels = lb.transform(test_labels)
         
         return train_images, train_labels, test_images, test_labels, validation_images, validation_labels
 
@@ -67,7 +68,6 @@ class paper(base_ff):
 
         # number of filters
         filter_size = 32
-        nfilter = 0
 
         model = models.Sequential()
 
@@ -81,12 +81,8 @@ class paper(base_ff):
         
                     model.add(layers.Conv2D(filter_size, (3, 3), activation='relu', padding='same', input_shape=(32, 32, 3)))
 
-                    nfilter += 1
-
                     # Duplicate number of filters for each two convolutions
-                    if nfilter == 2:
-                        filter_size *= 2
-                        nfilter = 0
+                    if (((i + j) % 2) == 1): filter_size = filter_size * 2
 
                     # Add batch normalization
                     if has_batch_normalization:
@@ -147,10 +143,10 @@ class paper(base_ff):
             print('Trainning %s of 3' % (i + 1))
 
             # Early Stop when bad networks are identified        
-            es = callbacks.EarlyStopping(monitor='val_accuracy', mode='max', verbose=1, patience=10, baseline=0.5)
+            # es = callbacks.EarlyStopping(monitor='val_accuracy', mode='max', verbose=1, patience=10, baseline=0.5)
 
-            model.fit(train_images, train_labels, epochs=70, batch_size=128, 
-                validation_data=(validation_images, validation_labels), callbacks=[es])
+            model.fit(train_images, train_labels, epochs=10, batch_size=128, 
+                validation_data=(validation_images, validation_labels))#, callbacks=[es])
             
             loss, accuracy, f1_score = model.evaluate(test_images, test_labels, verbose=1)
 
