@@ -19,21 +19,16 @@ def evaluate(phenotype):
     # Carregando dataset
     (train_images, train_labels), (test_images, test_labels) = datasets.cifar10.load_data()
 
-    validation_images, test_images, validation_labels, test_labels = train_test_split(test_images, test_labels, test_size=0.33, random_state=42)
-
     # Normalizando
-    train_images = train_images / 255.0
-    test_images = test_images / 255.0
-    validation_images = validation_images / 255.0
+    train_images = train_images.astype("float") / 255.0
+    test_images = test_images.astype("float") / 255.0
 
     lb = LabelBinarizer()
     train_labels = lb.fit_transform(train_labels)
-    validation_labels = lb.transform(validation_labels)
     test_labels = lb.transform(test_labels)
 
     # num de filtros
     filter_size = 32
-    nfilter = 0
 
     # Iniciando o modelo da RN
     model = models.Sequential()
@@ -48,12 +43,8 @@ def evaluate(phenotype):
     
                 model.add(layers.Conv2D(filter_size, (3, 3), activation='relu', padding='same', input_shape=(32, 32, 3)))
 
-                nfilter += 1
-
-                # Numero de filtros duplica a cada duas Convolucoes
-                if nfilter == 2:
-                    filter_size *= 2
-                    nfilter = 0
+                # Duplicate number of filters for each two convolutions
+                if (((i + j) % 2) == 1): filter_size = filter_size * 2
 
                 if has_batch_normalization:
                     model.add(layers.BatchNormalization())
@@ -83,12 +74,19 @@ def evaluate(phenotype):
 
     opt = optimizers.Adam(lr=learning_rate)
     
-    model.compile(loss='categorical_crossentropy', optimizer=opt, metrics=['accuracy'])
-        
-    # es = callbacks.EarlyStopping(monitor='val_accuracy', mode='max', verbose=1, patience=35, baseline=0.5)
+    def f1_score(y_true, y_pred):
+        true_positives = K.sum(K.round(K.clip(y_true * y_pred, 0, 1)))
+        possible_positives = K.sum(K.round(K.clip(y_true, 0, 1)))
+        predicted_positives = K.sum(K.round(K.clip(y_pred, 0, 1)))
+        precision = true_positives / (predicted_positives + K.epsilon())
+        recall = true_positives / (possible_positives + K.epsilon())
+        f1_val = 2 * (precision * recall) / (precision + recall + K.epsilon())
+        return f1_val
+
+    model.compile(loss='categorical_crossentropy', optimizer=opt, metrics=['accuracy', f1_score])
     
     # history = model.fit(train_images, train_labels, epochs=70, batch_size=128, 
-    #     validation_data=(validation_images, validation_labels), callbacks=[es])
+    #     validation_data=(test_images, test_labels), verbose=1)
 
     datagen = ImageDataGenerator(zoom_range=0.2, horizontal_flip=True)
 
@@ -97,7 +95,7 @@ def evaluate(phenotype):
     history = model.fit(datagen.flow(train_images, train_labels, batch_size=batch_size),
             steps_per_epoch=train_images.shape[0]//batch_size, 
             epochs=400, 
-            validation_data=(validation_images, validation_labels), 
+            validation_data=(test_images, test_labels), 
             verbose=1)
 
     # summarize history for accuracy
@@ -117,9 +115,9 @@ def evaluate(phenotype):
     plt.legend(['train', 'test'], loc='upper left')
     plt.show()
         
-    _, acuracia = model.evaluate(test_images, test_labels, verbose=2)
+    _, acuracia, f1 = model.evaluate(test_images, test_labels, verbose=2)
     
-    return acuracia
+    print(acuracia, f1)
 
 
-evaluate('(((conv*3)bnorm-pool-dropout)*3)fc*1*512*lr-0.001')
+evaluate('(((conv*2)pool)*3)fc*1*256*lr-0.01')
