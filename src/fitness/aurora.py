@@ -130,7 +130,7 @@ class aurora(base_ff):
                 accuracy, accuracy_sd = self.train_model(model)
             except Exception as e:
                 print(e)
-                accuracy, accuracy_sd = 0.0, 0.0, 0.0, 0.0
+                accuracy, accuracy_sd = 0.0, 0.0
 
             self.save_metrics(ind.phenotype, accuracy, accuracy_sd)
 
