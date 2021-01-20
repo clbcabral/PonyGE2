@@ -65,8 +65,6 @@ class aurora(base_ff):
             if layer.startswith('Conv2D'):
                 _, filters, ka, kb = [int(i) for i in re.findall('\d+', layer)]
                 model.add(layers.Conv2D(filters, (ka, kb), activation=params[-1]))
-            elif layer.startswith('Dense'):
-                model.add(layers.Dense(int(params[-1])))
             elif layer.startswith('Dropout'):
                 model.add(layers.Dropout(float(params[-1])))
             elif layer.startswith('MaxPooling2D'):
@@ -75,6 +73,15 @@ class aurora(base_ff):
             elif layer.startswith('AvgPooling2D'):
                 _, pa, pb = [int(i) for i in re.findall('\d+', layer)]
                 model.add(layers.AveragePooling2D(pool_size=(pa, pb), padding=params[-1]))
+
+        model.add(layers.Flatten())
+
+        for layer in layers_list:
+            params = layer.strip().split(' ')
+            if layer.startswith('Dense'):
+                model.add(layers.Dense(int(params[-1])))
+
+        model.add(layers.Dense(10, activation='softmax'))
 
         model.summary()
         model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
@@ -99,7 +106,7 @@ class aurora(base_ff):
             model.fit(train_images, train_labels, epochs=50, batch_size=128, 
                 validation_data=(validation_images, validation_labels), callbacks=[es])
             
-            loss, accuracy, f1_score = model.evaluate(test_images, test_labels, verbose=1)
+            loss, accuracy = model.evaluate(test_images, test_labels, verbose=1)
 
             accuracies.append(accuracy)
 
@@ -118,11 +125,11 @@ class aurora(base_ff):
 
             print('Phenotype not yet trained. Building...')
 
-            model = self.build_model(ind.phenotype)
-
-            if model:
+            try:
+                model = self.build_model(ind.phenotype)
                 accuracy, accuracy_sd = self.train_model(model)
-            else:
+            except Exception as e:
+                print(e)
                 accuracy, accuracy_sd = 0.0, 0.0, 0.0, 0.0
 
             self.save_metrics(ind.phenotype, accuracy, accuracy_sd)
