@@ -8,7 +8,7 @@ import numpy as np
 import re, csv, os
 
 
-class paper(base_ff):
+class paper_mnist(base_ff):
 
     maximise = True
     multi_objective = True
