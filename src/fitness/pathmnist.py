@@ -23,7 +23,7 @@ class pathmnist(base_ff):
 
     def load_data(self):
         
-        dataset = np.load('pathmnist.npz')
+        dataset = np.load('/content/pathmnist.npz')
 
         train_images = dataset['train_images']
         validation_images = dataset['val_images']
