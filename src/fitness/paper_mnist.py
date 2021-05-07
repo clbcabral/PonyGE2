@@ -5,17 +5,18 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelBinarizer
 from keras.utils import to_categorical
 import numpy as np
-import re, csv, os
+import re, csv, os, requests
 
 
 class paper_mnist(base_ff):
 
     maximise = True
     multi_objective = True
+    dataset_name = 'mnist'
+    url = 'https://gemetrics.herokuapp.com/api/metrics/'
 
     def __init__(self):
         super().__init__()
-        self.filename = '/pesquisa/phenotypes.csv'
         self.num_obj = 2
         fit = base_ff()
         fit.maximise = True
@@ -46,22 +47,34 @@ class paper_mnist(base_ff):
         return train_images, train_labels, test_images, test_labels, validation_images, validation_labels
 
     def get_metrics(self, phenotype):
+  
         accuracy, accuracy_sd, f1_score, f1_score_sd = None, None, None, None
-        with open(self.filename, mode='r') as file:
-            reader = csv.reader(file)
-            for row in reader:
-                if row[0] == phenotype:
-                    accuracy = float(row[1])
-                    accuracy_sd = float(row[2])
-                    f1_score = float(row[3])
-                    f1_score_sd = float(row[4])
-                    break
+    
+        r = requests.get(self.url, params={
+            'dataset': self.dataset_name,
+            'phenotype': phenotype,
+        })
+        data = r.json()
+
+        if len(data):
+            data = data[0]
+            accuracy = float(data['accuracy'])
+            accuracy_sd = float(data['accuracy_sd'])
+            f1_score = float(data['f1_score'])
+            f1_score_sd = float(data['f1_score_sd'])
+    
         return accuracy, accuracy_sd, f1_score, f1_score_sd
 
     def save_metrics(self, phenotype, accuracy, accuracy_sd, f1_score, f1_score_sd):
-        with open(self.filename, mode='a') as file:
-            writer = csv.writer(file)
-            writer.writerow([phenotype, accuracy, accuracy_sd, f1_score, f1_score_sd])
+        data = {
+            'dataset': self.dataset_name,
+            'phenotype': phenotype,
+            'accuracy': accuracy,
+            'accuracy_sd': accuracy_sd,
+            'f1_score': f1_score,
+            'f1_score_sd': f1_score_sd,
+        }
+        r = requests.post(self.url, json=data)
 
     def build_model(self, phenotype):
 
