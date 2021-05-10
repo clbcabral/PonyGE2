@@ -66,7 +66,7 @@ def hinge(y, yhat):
     if 0 in y_vals:
         y[y == 0] = -1
 
-    # Our definition of hinge loss cannot be used for multiclass
+    # Our definition of hinge loss cannot be used for multi-class
     assert len(y_vals) == 2
 
     # NB not np.max. maximum does element-wise max.  Also we use the
@@ -104,7 +104,7 @@ def f1_score(y, yhat):
     if -1 in y_vals:
         y[y == -1] = 0
 
-    # We binarize with a threshold, so this cannot be used for multiclass
+    # We binarize with a threshold, so this cannot be used for multi-class
     assert len(y_vals) == 2
 
     # convert real values to boolean {0, 1} with a zero threshold

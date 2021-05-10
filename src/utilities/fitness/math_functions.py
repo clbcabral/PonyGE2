@@ -177,7 +177,7 @@ def percentile(sorted_list, p):
     in a sorted list
 
     :param sorted_list: The sorted list
-    :param p: The percetile
+    :param p: The percentile
     :return: The element corresponding to the percentile
     """
 

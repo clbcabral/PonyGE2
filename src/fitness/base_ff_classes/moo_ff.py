@@ -66,7 +66,7 @@ class moo_ff:
         
         :param fitness_vector: A vector/list of fitnesses.
         :param objective_index: The index of the desired fitness.
-        :return: The fitness at the objective index of the fitness vecror.
+        :return: The fitness at the objective index of the fitness vector.
         """
         
         if not isinstance(fitness_vector, list):

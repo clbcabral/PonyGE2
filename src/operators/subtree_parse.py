@@ -30,7 +30,7 @@ def combine_snippets():
     # Get new snippets list.
     updated_snippets = sorted(trackers.snippets.keys())
 
-    # Initialise counter for reduction interations.
+    # Initialise counter for reduction iterations.
     no_passes = 1
 
     while updated_snippets != original_snippets:
@@ -454,7 +454,7 @@ def reduce_trees():
                                                                      children)
 
                             elif all([i != [] for i in children]):
-                                # We have compiled a full set of potneital
+                                # We have compiled a full set of potential
                                 # children to reduce_trees. Generate a key and check
                                 # if it exists.
                                 generate_key_and_check(pre, aft, reduce,

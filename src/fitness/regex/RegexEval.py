@@ -32,7 +32,7 @@ class RegexEval(base_ff):
         
         if params['MULTICORE']:
             s = "fitness.regex.RegexEval.RegexEval\n" \
-                "Error: Multicore evaluation cannot be used with RegexEval " \
+                "Error: multi-core evaluation cannot be used with RegexEval " \
                 "fitness function, as this fitness function already manages " \
                 "processes using the multiprocessing library."
             raise Exception(s)

@@ -4,7 +4,7 @@ from stats.stats import stats, get_stats
 from utilities.stats import trackers
 
 
-"""Hill-climbing is just about the simplest metaheuristic there
+"""Hill-climbing is just about the simplest meta-heuristic there
 is. It's of interest in GP/GE because of the lingering suspicion among
 many researchers that crossover just doesn't work. This goes back to
 90s work by Chellapilla and by O'Reilly. Today, many papers are

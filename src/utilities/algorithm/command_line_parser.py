@@ -172,14 +172,14 @@ def parse_cmd_args(arguments):
     parser.add_argument('--codon_size',
                         dest='CODON_SIZE',
                         type=int,
-                        help='Sets the range from 0 to condon_size to be used '
+                        help='Sets the range from 0 to codon_size to be used '
                              'in genome, requires int value')
     parser.add_argument('--max_genome_length',
                         dest='MAX_GENOME_LENGTH',
                         type=int,
                         help='Sets the maximum chromosome length for the '
                              'algorithm, requires int value. The default max '
-                             'genome length is set to None, i.e. gemomes can '
+                             'genome length is set to None, i.e. genomes can '
                              'grow indefinitely. This can also be set by '
                              'specifying the max genome length to be 0.')
     parser.add_argument('--max_wraps',
@@ -234,7 +234,7 @@ def parse_cmd_args(arguments):
     parser.add_argument('--tournament_size',
                         dest='TOURNAMENT_SIZE',
                         type=int,
-                        help='Sets the number of indivs to contest tournament,'
+                        help='Sets the number of individuals to contest tournament,'
                              ' requires int.')
     parser.add_argument('--selection_proportion',
                         dest='SELECTION_PROPORTION',
@@ -348,12 +348,12 @@ def parse_cmd_args(arguments):
                         dest='MULTICORE',
                         action='store_true',
                         default=None,
-                        help='Turns on multicore evaluation.')
+                        help='Turns on multi-core evaluation.')
     parser.add_argument('--cores',
                         dest='CORES',
                         type=int,
                         help='Specify the number of cores to be used for '
-                             'multicore evaluation. Requires int.')
+                             'multi-core evaluation. Requires int.')
     
     # REPLACEMENT
     parser.add_argument('--replacement',
@@ -473,7 +473,7 @@ def parse_cmd_args(arguments):
                         dest='MULTIAGENT',
                         action='store_true',
                         default=None,                        
-                        help='This enable the multiagent mode. If this mode is'
+                        help='This enable the multi-agent mode. If this mode is'
                              ' enabled the search_loop and step parameter are' 
                              ' overridden with search_multiagent and step_multiagent'
                              ' respectively')

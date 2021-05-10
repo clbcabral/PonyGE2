@@ -176,12 +176,12 @@ params = {
         # encourage diversity in the population.
         'MUTATE_DUPLICATES': False,
 
-        # MULTIAGENT Parameters
-        # True or False for Multiagent
+        # MULTI-AGENT Parameters
+        # True or False for multi-agent
         'MULTIAGENT': False,
         # Agent Size. Number of agents having their own copy of genetic material
         'AGENT_SIZE': 100,
-        # Interaction Probablity. How frequently the agents can interaction with each other
+        # Interaction Probability. How frequently the agents can interaction with each other
         'INTERACTION_PROBABILITY': 0.5,
         
         # OTHER
@@ -201,7 +201,7 @@ def load_params(file_name):
     try:
         open(file_name, "r")
     except FileNotFoundError:
-        s = "algorithm.paremeters.load_params\n" \
+        s = "algorithm.parameters.load_params\n" \
             "Error: Parameters file not found.\n" \
             "       Ensure file extension is specified, e.g. 'regression.txt'."
         raise Exception(s)

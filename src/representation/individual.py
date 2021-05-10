@@ -114,7 +114,7 @@ class Individual(object):
         evaluation on either training or test distributions. Sets fitness
         value.
 
-        :return: Nothing unless multicore evaluation is being used. In that
+        :return: Nothing unless multi-core evaluation is being used. In that
         case, returns self.
         """
 
