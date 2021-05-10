@@ -43,18 +43,18 @@ def parse_terminals(target):
     for T in sorted(terms.keys()):
         # Iterate over all Terminals.
 
-        # Find all occurances of this terminal in the target string.
-        occurrances = []
+        # Find all occurrences of this terminal in the target string.
+        occurrences = []
         index = 0
         while index < len(target):
             index = target.find(T, index)
-            if index not in occurrances and index != -1:
-                occurrances.append(index)
+            if index not in occurrences and index != -1:
+                occurrences.append(index)
                 index += len(T)
             else:
                 break
 
-        for idx in occurrances:
+        for idx in occurrences:
             # Check each occurrence of this terminal in the target string.
 
             for NT in terms[T]:

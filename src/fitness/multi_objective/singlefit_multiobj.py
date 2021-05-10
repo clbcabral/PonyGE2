@@ -11,7 +11,7 @@ import numpy as np
 class singlefit_multiobj(base_ff):
     """
     An example of a single fitness class that generates
-    two fitness values for multiobjective optimisation
+    two fitness values for multi-objective optimisation
     """
 
     maximise = True
@@ -57,7 +57,7 @@ class singlefit_multiobj(base_ff):
 
         :param fitness_vector: A vector/list of fitnesses.
         :param objective_index: The index of the desired fitness.
-        :return: The fitness at the objective index of the fitness vecror.
+        :return: The fitness at the objective index of the fitness vector.
         """
 
         if not isinstance(fitness_vector, list):

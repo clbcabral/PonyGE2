@@ -33,7 +33,7 @@ class progsys(base_ff):
                           params['GRAMMAR_FILE'])
         self.eval = self.create_eval_process()
         if params['MULTICORE']:
-            print("Warming: Multicore is not supported with progsys "
+            print("Warming: multi-core is not supported with progsys "
                   "as fitness function.\n"
                   "Fitness function only allows sequential evaluation.")
 

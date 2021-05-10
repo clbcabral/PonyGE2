@@ -82,7 +82,7 @@ def map_ind_from_genome(genome):
              The number of used codons.
     """
 
-    # Create local variables to avoide multiple dictionary lookups
+    # Create local variables to avoid multiple dictionary lookups
     max_tree_depth, max_wraps = params['MAX_TREE_DEPTH'], params['MAX_WRAPS']
     bnf_grammar = params['BNF_GRAMMAR']
 

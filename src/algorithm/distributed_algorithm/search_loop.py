@@ -15,9 +15,9 @@ def create_agents(n,p):
 
 def search_loop():
     """
-    This loop is used when the multiagent parameter is passed
+    This loop is used when the multi-agent parameter is passed
     """
-    # Create a list of agents based on the paramater passed
+    # Create a list of agents based on the parameter passed
     agents = create_agents(params['AGENT_SIZE'],params['INTERACTION_PROBABILITY'])
 
     ##Multi-Agent based GE

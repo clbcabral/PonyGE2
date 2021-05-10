@@ -18,13 +18,13 @@ class Agent():
         # Interaction probability received in constructor
         self.interaction_probability = ip
 
-        # Only initialize singel individual. Single agent can only have single genetic information
+        # Only initialize single individual. Single agent can only have single genetic information
         self.individual = initialisation(1)   
 
         # Evaluate the fitness for the the individual    
         self.individual = evaluate_fitness(self.individual)
 
-        # Flag which store the boolean value for other nebouring agents found or not
+        # Flag which store the boolean value for other neighbouring agents found or not
         self.agents_found = False
 
 
@@ -83,12 +83,12 @@ class Agent():
             # Sort the individuals list 
             individuals.sort(reverse=True)
 
-            # Get the higest performing individual from the sorted population 
+            # Get the highest performing individual from the sorted population
             self.new_individual = individuals[0]
     
     def update(self):
         #Update the information if the agent has sense nearby agents
         if self.agents_found:
             
-            # Repalce the individual with the higest performing individual obtained from act method
+            # Replace the individual with the highest performing individual obtained from act method
             self.individual = [self.new_individual]

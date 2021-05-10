@@ -124,7 +124,7 @@ def compress(s):
 
 def compressibility(s):
     """
-    Compressability is in [0, 1]. It's high when the compressed string
+    Compressibility is in [0, 1]. It's high when the compressed string
     is much shorter than the original.
     
     :param s:

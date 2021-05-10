@@ -16,7 +16,7 @@ def search_loop():
     """
 
     if params['MULTICORE']:
-        # initialize pool once, if mutlicore is enabled
+        # initialize pool once, if multi-core is enabled
         params['POOL'] = Pool(processes=params['CORES'], initializer=pool_init,
                               initargs=(params,))  # , maxtasksperchild=1)
 
@@ -55,7 +55,7 @@ def search_loop_from_state():
     individuals = trackers.state_individuals
     
     if params['MULTICORE']:
-        # initialize pool once, if mutlicore is enabled
+        # initialize pool once, if multi-core is enabled
         params['POOL'] = Pool(processes=params['CORES'], initializer=pool_init,
                               initargs=(params,))  # , maxtasksperchild=1)
     

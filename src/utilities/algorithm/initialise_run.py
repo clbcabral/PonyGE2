@@ -149,15 +149,15 @@ def set_param_imports():
                     else:
                         # Just module name specified. Use default location.
 
-                        # If multiagent is specified need to change
+                        # If multi-agent is specified need to change
                         # how search and step module is called
-                        # Loop and step functions for multiagent is contained 
+                        # Loop and step functions for multi-agent is contained
                         # inside algorithm search_loop_distributed and 
                         # step_distributed respectively
 
                         if params['MULTIAGENT'] and \
                         ( op == 'SEARCH_LOOP' or op == 'STEP' ) :
-                            # Define the directory structure for the multiagent search
+                            # Define the directory structure for the multi-agent search
                             # loop and step
                             multiagent_ops = {'search_loop':'distributed_algorithm.search_loop' \
                                                 ,'step':'distributed_algorithm.step'}
