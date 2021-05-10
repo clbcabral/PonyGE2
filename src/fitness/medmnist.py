@@ -87,7 +87,7 @@ class medmnist(base_ff):
 
         nblocks = int(phenotype[0])
 
-        for n in nblocks:
+        for n in range(nblocks):
 
             for block in phenotype.split(','):
                 
