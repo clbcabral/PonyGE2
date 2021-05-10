@@ -1,4 +1,4 @@
-GRAMMAR_FILE:           paper.pybnf
+GRAMMAR_FILE:           medmnist.pybnf
 FITNESS_FUNCTION:       pathmnist
 INITIALISATION:         uniform_genome
 GENERATIONS:            30
@@ -10,3 +10,6 @@ TOURNAMENT_SIZE:        2
 ELITE_SIZE:  		    1
 SELECTION:              nsga2_selection
 REPLACEMENT:            nsga2_replacement
+DATASET_NAME:           octmnist
+DATASET_NUM_CLASSES:    4
+METRICS_URL:            'https://gemetrics.herokuapp.com/api/metrics/'

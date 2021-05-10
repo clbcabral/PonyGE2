@@ -1,20 +1,20 @@
+from algorithm.parameters import params
 from fitness.base_ff_classes.base_ff import base_ff
 from tensorflow.keras import datasets, layers, models, callbacks, optimizers
 from tensorflow.keras import backend as K 
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelBinarizer
 import numpy as np
-import re, csv, os
+import re, csv, os, requests
 
 
-class pathmnist(base_ff):
+class medmnist(base_ff):
 
     maximise = True
     multi_objective = True
 
     def __init__(self):
         super().__init__()
-        self.filename = '/content/drive/MyDrive/pathmnist.csv'
         self.num_obj = 2
         fit = base_ff()
         fit.maximise = True
@@ -23,7 +23,7 @@ class pathmnist(base_ff):
 
     def load_data(self):
         
-        dataset = np.load('/content/pathmnist.npz')
+        dataset = np.load('/content/%s.npz' % params['DATASET_NAME'])
 
         train_images = dataset['train_images']
         validation_images = dataset['val_images']
@@ -46,73 +46,93 @@ class pathmnist(base_ff):
         return train_images, train_labels, test_images, test_labels, validation_images, validation_labels
 
     def get_metrics(self, phenotype):
+
         accuracy, accuracy_sd, f1_score, f1_score_sd = None, None, None, None
-        with open(self.filename, mode='r') as file:
-            reader = csv.reader(file)
-            for row in reader:
-                if row[0] == phenotype:
-                    accuracy = float(row[1])
-                    accuracy_sd = float(row[2])
-                    f1_score = float(row[3])
-                    f1_score_sd = float(row[4])
-                    break
+  
+        r = requests.get(params['METRICS_URL'], params={
+            'dataset': params['DATASET_NAME'],
+            'phenotype': phenotype,
+        })
+        data = r.json()
+
+        if len(data):
+            data = data[0]
+            accuracy = float(data['accuracy'])
+            accuracy_sd = float(data['accuracy_sd'])
+            f1_score = float(data['f1_score'])
+            f1_score_sd = float(data['f1_score_sd'])
+    
         return accuracy, accuracy_sd, f1_score, f1_score_sd
 
     def save_metrics(self, phenotype, accuracy, accuracy_sd, f1_score, f1_score_sd):
-        with open(self.filename, mode='a') as file:
-            writer = csv.writer(file)
-            writer.writerow([phenotype, accuracy, accuracy_sd, f1_score, f1_score_sd])
+        data = {
+            'dataset': params['DATASET_NAME'],
+            'phenotype': phenotype,
+            'accuracy': accuracy,
+            'accuracy_sd': accuracy_sd,
+            'f1_score': f1_score,
+            'f1_score_sd': f1_score_sd,
+        }
+        r = requests.post(params['METRICS_URL'], json=data)
 
     def build_model(self, phenotype):
 
-        nconv, npool, nfc, nfcneuron = [int(i) for i in re.findall('\d+', phenotype.split('lr-')[0])]
-        has_dropout = 'dropout' in phenotype
-        has_batch_normalization = 'bnorm' in phenotype
-        has_pool = 'pool' in phenotype
-        learning_rate = float(phenotype.split('lr-')[1])
-
-        # number of filters
-        filter_size = 32
-
         model = models.Sequential()
-        model.add(layers.InputLayer(input_shape=(28, 28, 3)))
 
-        # Pooling
-        for i in range(npool):
-    
-            # Convolutions
-            for j in range(nconv):
-    
-                model.add(layers.Conv2D(filter_size, (3, 3), activation='relu', padding='same'))
+        filter_size = 32
+        nconvs = 0
+        optimizer = None
 
-                # Duplicate number of filters for each two convolutions
-                if (((i + j) % 2) == 1): filter_size = filter_size * 2
+        model.add(layers.InputLayer(input_shape=(28, 28, 1)))
 
-                # Add batch normalization
-                if has_batch_normalization:
-                    model.add(layers.BatchNormalization())
+        nblocks = int(phenotype[0])
 
-            # Add pooling
-            if has_pool:
-                model.add(layers.MaxPooling2D(pool_size=(2, 2)))
-                # Add dropout
-                if has_dropout:
-                    model.add(layers.Dropout(0.25))
+        for n in nblocks:
 
-        model.add(layers.Flatten())
+            for block in phenotype.split(','):
+                
+                if 'Conv' in block:
 
-        # fully connected
-        for i in range(nfc):
-            model.add(layers.Dense(nfcneuron))
-            model.add(layers.Activation('relu'))
+                    if nconvs == 2:
+                        filter_size *= 2
+                        nconvs = 0
 
-        if has_dropout:
-            model.add(layers.Dropout(0.5))
+                    model.add(layers.Conv2D(filter_size, (3, 3), activation='relu', padding='same'))
 
-        model.add(layers.Dense(9, activation='softmax'))
+                    if 'BNorm' in block:
+                        model.add(layers.BatchNormalization())
+
+                    nconvs += 1
+                
+                if 'MaxPool' in block:
+                    model.add(layers.MaxPooling2D(pool_size=(2, 2)))
+                    
+                    if 'Dropout' in block:
+                        model.add(layers.Dropout(0.25))
+
+        
+        for block in phenotype.split(','):
+
+            if 'Flatten' in block:
+                model.add(layers.Flatten())
+
+            if 'Fc' in block:
+                
+                nfc, neurons = re.findall('\d+', block)
+
+                for n in range(int(nfc)):
+                    model.add(layers.Dense(int(neurons)))
+                    model.add(layers.Activation('relu'))
+
+                if 'Dropout' in block:
+                    model.add(layers.Dropout(0.5))
+
+            if 'Lr' in block:
+                args = re.findall('\d+\.\d+', block)
+                optimizer = optimizers.Adam(lr=float(args[0]))
+
+        model.add(layers.Dense(params['DATASET_NUM_CLASSES'], activation='softmax'))
         # model.summary()
-
-        opt = optimizers.Adam(lr=learning_rate)
 
         # F1 Score metric function
         def f1_score(y_true, y_pred):
@@ -124,7 +144,7 @@ class pathmnist(base_ff):
             f1_val = 2 * (precision * recall) / (precision + recall + K.epsilon())
             return f1_val
 
-        model.compile(loss='categorical_crossentropy', optimizer=opt, metrics=['accuracy', f1_score])
+        model.compile(loss='categorical_crossentropy', optimizer=optimizer, metrics=['accuracy', f1_score])
         
         return model
 
