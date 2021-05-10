@@ -12,5 +12,5 @@ SELECTION:              nsga2_selection
 REPLACEMENT:            nsga2_replacement
 DATASET_NAME:           organmnist_axial
 DATASET_NUM_CLASSES:    11
-DATASET_NUM_SHAPE:      3
+DATASET_NUM_SHAPE:      1
 METRICS_URL:            'https://gemetrics.herokuapp.com/api/metrics/'
