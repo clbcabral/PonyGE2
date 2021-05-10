@@ -83,7 +83,7 @@ class medmnist(base_ff):
         nconvs = 0
         optimizer = None
 
-        model.add(layers.InputLayer(input_shape=(28, 28, 1)))
+        model.add(layers.InputLayer(input_shape=(28, 28, params['DATASET_NUM_SHAPE'])))
 
         nblocks = int(phenotype[0])
 
