@@ -23,7 +23,7 @@ class medmnist(base_ff):
 
     def load_data(self):
         
-        dataset = np.load('/content/%s.npz' % params['DATASET_NAME'])
+        dataset = np.load('../../%s.npz' % params['DATASET_NAME'])
 
         train_images = dataset['train_images']
         validation_images = dataset['val_images']
@@ -132,7 +132,7 @@ class medmnist(base_ff):
                 optimizer = optimizers.Adam(lr=float(args[0]))
 
         model.add(layers.Dense(params['DATASET_NUM_CLASSES'], activation='softmax'))
-        # model.summary()
+        model.summary()
 
         # F1 Score metric function
         def f1_score(y_true, y_pred):
