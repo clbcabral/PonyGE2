@@ -79,7 +79,7 @@ class medmnist_tpu(base_ff):
     def build_model(self, phenotype):
 
         tpu = tf.distribute.cluster_resolver.TPUClusterResolver.connect()
-        tpu_strategy = tf.distribute.experimental.TPUStrategy(tpu)
+        tpu_strategy = tf.distribute.TPUStrategy(tpu)
 
         with tpu_strategy.scope():
 
@@ -140,17 +140,17 @@ class medmnist_tpu(base_ff):
             model.add(layers.Dense(params['DATASET_NUM_CLASSES'], activation='softmax'))
             model.summary()
 
-            # F1 Score metric function
-            def f1_score(y_true, y_pred):
-                true_positives = K.sum(K.round(K.clip(y_true * y_pred, 0, 1)))
-                possible_positives = K.sum(K.round(K.clip(y_true, 0, 1)))
-                predicted_positives = K.sum(K.round(K.clip(y_pred, 0, 1)))
-                precision = true_positives / (predicted_positives + K.epsilon())
-                recall = true_positives / (possible_positives + K.epsilon())
-                f1_val = 2 * (precision * recall) / (precision + recall + K.epsilon())
-                return f1_val
+        # F1 Score metric function
+        def f1_score(y_true, y_pred):
+            true_positives = K.sum(K.round(K.clip(y_true * y_pred, 0, 1)))
+            possible_positives = K.sum(K.round(K.clip(y_true, 0, 1)))
+            predicted_positives = K.sum(K.round(K.clip(y_pred, 0, 1)))
+            precision = true_positives / (predicted_positives + K.epsilon())
+            recall = true_positives / (possible_positives + K.epsilon())
+            f1_val = 2 * (precision * recall) / (precision + recall + K.epsilon())
+            return f1_val
 
-            model.compile(loss='categorical_crossentropy', optimizer=optimizer, metrics=['accuracy', f1_score])
+        model.compile(loss='categorical_crossentropy', optimizer=optimizer, metrics=['accuracy', f1_score])
         
         return model
 
