@@ -13,4 +13,4 @@ REPLACEMENT:            nsga2_replacement
 DATASET_NAME:           eurosat
 DATASET_NUM_CLASSES:    10
 DATASET_NUM_SHAPE:      3
-METRICS_URL:            'https://papermetrics.herokuapp.com/api/metrics/'
+METRICS_URL:            'https://gemetrics.herokuapp.com/api/metrics/'

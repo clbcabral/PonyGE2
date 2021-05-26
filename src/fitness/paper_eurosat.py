@@ -123,8 +123,9 @@ class paper_eurosat(base_ff):
             model.add(layers.Dropout(0.5))
 
         model.add(layers.Dense(10, activation='softmax'))
+        model.summary()
 
-        opt = optimizers.Adam(lr=learning_rate)
+        opt = optimizers.Adam(learning_rate=learning_rate)
 
         # F1 Score metric function
         def f1_score(y_true, y_pred):
