@@ -9,7 +9,7 @@ import re, csv, os, requests
 import tensorflow as tf
 
 
-class eurosat(base_ff):
+class paper_eurosat(base_ff):
 
     maximise = True
     multi_objective = True
