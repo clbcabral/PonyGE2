@@ -78,92 +78,75 @@ class paper_eurosat(base_ff):
 
     def build_model(self, phenotype):
 
-        try:
-            tpu = tf.distribute.cluster_resolver.TPUClusterResolver()  # TPU detection
-            print('Running on TPU ', tpu.cluster_spec().as_dict()['worker'])
-        except ValueError:
-            raise BaseException('ERROR: Not connected to a TPU runtime; please see the previous cell in this notebook for instructions!')
+        nconv, npool, nfc, nfcneuron = [int(i) for i in re.findall('\d+', phenotype.split('lr-')[0])]
+        has_dropout = 'dropout' in phenotype
+        has_batch_normalization = 'bnorm' in phenotype
+        has_pool = 'pool' in phenotype
+        learning_rate = float(phenotype.split('lr-')[1])
 
-        tf.config.experimental_connect_to_cluster(tpu)
-        tf.tpu.experimental.initialize_tpu_system(tpu)
-        tpu_strategy = tf.distribute.experimental.TPUStrategy(tpu)
+        # number of filters
+        filter_size = 32
 
-        with tpu_strategy.scope():
+        model = models.Sequential()
+        model.add(layers.InputLayer(input_shape=(64, 64, 3)))
 
-            nconv, npool, nfc, nfcneuron = [int(i) for i in re.findall('\d+', phenotype.split('lr-')[0])]
-            has_dropout = 'dropout' in phenotype
-            has_batch_normalization = 'bnorm' in phenotype
-            has_pool = 'pool' in phenotype
-            learning_rate = float(phenotype.split('lr-')[1])
+        # Pooling
+        for i in range(npool):
 
-            # number of filters
-            filter_size = 32
+            # Convolutions
+            for j in range(nconv):
 
-            model = models.Sequential()
-            model.add(layers.InputLayer(input_shape=(64, 64, 3)))
+                model.add(layers.Conv2D(filter_size, (3, 3), activation='relu', padding='same'))
 
-            # Pooling
-            for i in range(npool):
+                # Duplicate number of filters for each two convolutions
+                if (((i + j) % 2) == 1): filter_size = filter_size * 2
 
-                # Convolutions
-                for j in range(nconv):
+                # Add batch normalization
+                if has_batch_normalization:
+                    model.add(layers.BatchNormalization())
 
-                    model.add(layers.Conv2D(filter_size, (3, 3), activation='relu', padding='same'))
+            # Add pooling
+            if has_pool:
+                model.add(layers.MaxPooling2D(pool_size=(2, 2)))
+                # Add dropout
+                if has_dropout:
+                    model.add(layers.Dropout(0.25))
 
-                    # Duplicate number of filters for each two convolutions
-                    if (((i + j) % 2) == 1): filter_size = filter_size * 2
+        model.add(layers.Flatten())
 
-                    # Add batch normalization
-                    if has_batch_normalization:
-                        model.add(layers.BatchNormalization())
+        # fully connected
+        for i in range(nfc):
+            model.add(layers.Dense(nfcneuron))
+            model.add(layers.Activation('relu'))
 
-                # Add pooling
-                if has_pool:
-                    model.add(layers.MaxPooling2D(pool_size=(2, 2)))
-                    # Add dropout
-                    if has_dropout:
-                        model.add(layers.Dropout(0.25))
+        if has_dropout:
+            model.add(layers.Dropout(0.5))
 
-            model.add(layers.Flatten())
+        model.add(layers.Dense(10, activation='softmax'))
 
-            # fully connected
-            for i in range(nfc):
-                model.add(layers.Dense(nfcneuron))
-                model.add(layers.Activation('relu'))
+        opt = optimizers.Adam(lr=learning_rate)
 
-            if has_dropout:
-                model.add(layers.Dropout(0.5))
+        # F1 Score metric function
+        def f1_score(y_true, y_pred):
+            true_positives = K.sum(K.round(K.clip(y_true * y_pred, 0, 1)))
+            possible_positives = K.sum(K.round(K.clip(y_true, 0, 1)))
+            predicted_positives = K.sum(K.round(K.clip(y_pred, 0, 1)))
+            precision = true_positives / (predicted_positives + K.epsilon())
+            recall = true_positives / (possible_positives + K.epsilon())
+            f1_val = 2 * (precision * recall) / (precision + recall + K.epsilon())
+            return f1_val
 
-            model.add(layers.Dense(10, activation='softmax'))
-
-            opt = optimizers.Adam(lr=learning_rate)
-
-            # F1 Score metric function
-            def f1_score(y_true, y_pred):
-                true_positives = K.sum(K.round(K.clip(y_true * y_pred, 0, 1)))
-                possible_positives = K.sum(K.round(K.clip(y_true, 0, 1)))
-                predicted_positives = K.sum(K.round(K.clip(y_pred, 0, 1)))
-                precision = true_positives / (predicted_positives + K.epsilon())
-                recall = true_positives / (possible_positives + K.epsilon())
-                f1_val = 2 * (precision * recall) / (precision + recall + K.epsilon())
-                return f1_val
-
-            model.compile(loss='categorical_crossentropy', optimizer=opt, metrics=['accuracy', f1_score])
+        model.compile(loss='categorical_crossentropy', optimizer=opt, metrics=['accuracy', f1_score])
 
         return model
 
 
     def train_model(self, model):
 
-        batch_size = 128
-
         accuracies, f1_scores = [], []
 
         train_images, train_labels, test_images, \
             test_labels, validation_images, validation_labels = self.load_data()
-
-        train_ds = tf.data.Dataset.from_tensor_slices((train_images, train_labels)).batch(batch_size, drop_remainder=True)
-        validation_ds = tf.data.Dataset.from_tensor_slices((validation_images, validation_labels)).batch(batch_size, drop_remainder=True)
 
         # Train three times
         for i in range(3):
@@ -177,12 +160,8 @@ class paper_eurosat(base_ff):
             # Early Stop when bad networks are identified        
             es = callbacks.EarlyStopping(monitor='val_accuracy', mode='max', verbose=1, patience=10, baseline=0.5)
 
-            model.fit(train_ds, 
-                  epochs=70, 
-                  batch_size=batch_size, 
-                  verbose=1,
-                  validation_data=validation_ds, 
-                  callbacks=[es])
+            model.fit(train_images, train_labels, epochs=70, batch_size=128, 
+                validation_data=(validation_images, validation_labels), callbacks=[es])
             
             loss, accuracy, f1_score = model.evaluate(test_images, test_labels, verbose=1)
 
