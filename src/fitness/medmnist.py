@@ -32,6 +32,11 @@ class medmnist(base_ff):
         validation_labels = dataset['val_labels']
         test_labels = dataset['test_labels']
 
+        if params['DATASET_NUM_SHAPE'] == 1:
+            train_images = train_images.reshape((train_images.shape[0], 28, 28, 1))
+            validation_images = validation_images.reshape((validation_images.shape[0], 28, 28, 1))
+            test_images = test_images.reshape((test_images.shape[0], 28, 28, 1))
+
         train_images = train_images.astype("float") / 255.0
         test_images = test_images.astype("float") / 255.0
         validation_images = validation_images.astype("float") / 255.0
