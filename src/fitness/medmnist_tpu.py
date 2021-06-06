@@ -33,6 +33,11 @@ class medmnist_tpu(base_ff):
         validation_labels = dataset['val_labels']
         test_labels = dataset['test_labels']
 
+        if params['DATASET_NUM_SHAPE'] == 1:
+            train_images = train_images.reshape((train_images.shape[0], 28, 28, 1))
+            validation_images = validation_images.reshape((validation_images.shape[0], 28, 28, 1))
+            test_images = test_images.reshape((test_images.shape[0], 28, 28, 1))
+
         train_images = train_images.astype("float") / 255.0
         test_images = test_images.astype("float") / 255.0
         validation_images = validation_images.astype("float") / 255.0
@@ -182,8 +187,8 @@ class medmnist_tpu(base_ff):
             # Early Stop when bad networks are identified        
             es = callbacks.EarlyStopping(monitor='val_accuracy', mode='max', verbose=1, patience=10, baseline=0.5)
 
-            model.fit(train_images, train_labels, epochs=70, batch_size=batch_size, 
-                validation_data=(validation_images, validation_labels), callbacks=[es])
+            model.fit(train_ds, epochs=70, batch_size=batch_size, 
+                validation_data=validation_ds, callbacks=[es])
 
             loss, accuracy, f1_score = model.evaluate(test_images, test_labels, verbose=1)
 
