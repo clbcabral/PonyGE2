@@ -143,7 +143,7 @@ class medmnist_tpu(base_ff):
 
                 if 'Lr' in block:
                     args = re.findall('\d+\.\d+', block)
-                    optimizer = optimizers.Adam(lr=float(args[0]))
+                    optimizer = optimizers.Adam(learning_rate=float(args[0]))
 
             model.add(layers.Dense(params['DATASET_NUM_CLASSES'], activation='softmax'))
             model.summary()
