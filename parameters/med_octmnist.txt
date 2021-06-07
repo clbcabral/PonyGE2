@@ -1,5 +1,5 @@
 GRAMMAR_FILE:           medmnist.pybnf
-FITNESS_FUNCTION:       medmnist
+FITNESS_FUNCTION:       medmnist_tpu
 INITIALISATION:         uniform_genome
 GENERATIONS:            30
 POPULATION_SIZE:        50
