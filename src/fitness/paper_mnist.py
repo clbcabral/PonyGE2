@@ -6,6 +6,7 @@ from sklearn.preprocessing import LabelBinarizer
 from keras.utils import to_categorical
 import numpy as np
 import re, csv, os, requests
+import tensorflow as tf
 
 
 class paper_mnist(base_ff):
@@ -78,97 +79,109 @@ class paper_mnist(base_ff):
 
     def build_model(self, phenotype):
 
-        # To free memory on google colab.
-        if K.backend() == 'tensorflow':
-            K.clear_session()
+        # detect and init the TPU
+        tpu = tf.distribute.cluster_resolver.TPUClusterResolver.connect()
 
-        nconv, npool, nfc, nfcneuron = [int(i) for i in re.findall('\d+', phenotype.split('lr-')[0])]
-        has_dropout = 'dropout' in phenotype
-        has_batch_normalization = 'bnorm' in phenotype
-        has_pool = 'pool' in phenotype
-        learning_rate = float(phenotype.split('lr-')[1])
+        # instantiate a distribution strategy
+        tpu_strategy = tf.distribute.experimental.TPUStrategy(tpu)
 
-        # number of filters
-        filter_size = 28
+        with tpu_strategy.scope():
 
-        model = models.Sequential()
+            model = models.Sequential()
 
-        try:
-        
-            # Pooling
-            for i in range(npool):
-        
-                # Convolutions
-                for j in range(nconv):
-        
-                    model.add(layers.Conv2D(filter_size, (3, 3), activation='relu', padding='same', input_shape=(28, 28, 1)))
+            # number of filters
+            filter_size = 28
+            nconv, npool, nfc, nfcneuron = [int(i) for i in re.findall('\d+', phenotype.split('lr-')[0])]
+            has_dropout = 'dropout' in phenotype
+            has_batch_normalization = 'bnorm' in phenotype
+            has_pool = 'pool' in phenotype
+            learning_rate = float(phenotype.split('lr-')[1])
 
-                    # Duplicate number of filters for each two convolutions
-                    if (((i + j) % 2) == 1): filter_size = filter_size * 2
+            try:
+            
+                # Pooling
+                for i in range(npool):
+            
+                    # Convolutions
+                    for j in range(nconv):
+            
+                        model.add(layers.Conv2D(filter_size, (3, 3), activation='relu', padding='same', input_shape=(28, 28, 1)))
 
-                    # Add batch normalization
-                    if has_batch_normalization:
-                        model.add(layers.BatchNormalization())
+                        # Duplicate number of filters for each two convolutions
+                        if (((i + j) % 2) == 1): filter_size = filter_size * 2
 
-                # Add pooling
-                if has_pool:
-                    model.add(layers.MaxPooling2D(pool_size=(2, 2)))
-                    # Add dropout
-                    if has_dropout:
-                        model.add(layers.Dropout(0.25))
+                        # Add batch normalization
+                        if has_batch_normalization:
+                            model.add(layers.BatchNormalization())
 
-            model.add(layers.Flatten())
+                    # Add pooling
+                    if has_pool:
+                        model.add(layers.MaxPooling2D(pool_size=(2, 2)))
+                        # Add dropout
+                        if has_dropout:
+                            model.add(layers.Dropout(0.25))
 
-            # fully connected
-            for i in range(nfc):
-                model.add(layers.Dense(nfcneuron))
-                model.add(layers.Activation('relu'))
+                model.add(layers.Flatten())
 
-            if has_dropout:
-                model.add(layers.Dropout(0.5))
+                # fully connected
+                for i in range(nfc):
+                    model.add(layers.Dense(nfcneuron))
+                    model.add(layers.Activation('relu'))
 
-            model.add(layers.Dense(10, activation='softmax'))
-            # model.summary()
+                if has_dropout:
+                    model.add(layers.Dropout(0.5))
 
-        except Exception as ex:
-            # Some NN topologies are invalid
-            print(ex)
-            return None
+                model.add(layers.Dense(10, activation='softmax'))
+                # model.summary()
 
-        opt = optimizers.Adam(lr=learning_rate)
+            except Exception as ex:
+                # Some NN topologies are invalid
+                print(ex)
+                return None
 
-        # F1 Score metric function
-        def f1_score(y_true, y_pred):
-            true_positives = K.sum(K.round(K.clip(y_true * y_pred, 0, 1)))
-            possible_positives = K.sum(K.round(K.clip(y_true, 0, 1)))
-            predicted_positives = K.sum(K.round(K.clip(y_pred, 0, 1)))
-            precision = true_positives / (predicted_positives + K.epsilon())
-            recall = true_positives / (possible_positives + K.epsilon())
-            f1_val = 2 * (precision * recall) / (precision + recall + K.epsilon())
-            return f1_val
+            opt = optimizers.Adam(lr=learning_rate)
 
-        model.compile(loss='categorical_crossentropy', optimizer=opt, metrics=['accuracy', f1_score])
+            # F1 Score metric function
+            def f1_score(y_true, y_pred):
+                true_positives = K.sum(K.round(K.clip(y_true * y_pred, 0, 1)))
+                possible_positives = K.sum(K.round(K.clip(y_true, 0, 1)))
+                predicted_positives = K.sum(K.round(K.clip(y_pred, 0, 1)))
+                precision = true_positives / (predicted_positives + K.epsilon())
+                recall = true_positives / (possible_positives + K.epsilon())
+                f1_val = 2 * (precision * recall) / (precision + recall + K.epsilon())
+                return f1_val
+
+            model.compile(loss='categorical_crossentropy', optimizer=opt, metrics=['accuracy', f1_score])
         
         return model
 
 
     def train_model(self, model):
 
+        batch_size = 128
+
         accuracies, f1_scores = [], []
 
         train_images, train_labels, test_images, \
             test_labels, validation_images, validation_labels = self.load_data()
 
+        train_ds = tf.data.Dataset.from_tensor_slices((train_images, train_labels)).batch(batch_size, drop_remainder=True)
+        validation_ds = tf.data.Dataset.from_tensor_slices((validation_images, validation_labels)).batch(batch_size, drop_remainder=True)
+
         # Train three times
         for i in range(3):
+
+            # To free memory on google colab.
+            if K.backend() == 'tensorflow':
+                K.clear_session()
 
             print('Trainning %s of 3' % (i + 1))
 
             # Early Stop when bad networks are identified        
             es = callbacks.EarlyStopping(monitor='val_accuracy', mode='max', verbose=1, patience=10, baseline=0.5)
 
-            model.fit(train_images, train_labels, epochs=70, batch_size=128, 
-                validation_data=(validation_images, validation_labels), callbacks=[es])
+            model.fit(train_ds, train_labels, epochs=70, batch_size=batch_size, 
+                validation_data=validation_ds, callbacks=[es])
             
             loss, accuracy, f1_score = model.evaluate(test_images, test_labels, verbose=1)
 
