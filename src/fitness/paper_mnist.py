@@ -180,8 +180,7 @@ class paper_mnist(base_ff):
             # Early Stop when bad networks are identified        
             es = callbacks.EarlyStopping(monitor='val_accuracy', mode='max', verbose=1, patience=10, baseline=0.5)
 
-            model.fit(train_ds, train_labels, epochs=70, batch_size=batch_size, 
-                validation_data=validation_ds, callbacks=[es])
+            model.fit(train_ds, epochs=70, batch_size=batch_size, validation_data=validation_ds, callbacks=[es])
             
             loss, accuracy, f1_score = model.evaluate(test_images, test_labels, verbose=1)
 
