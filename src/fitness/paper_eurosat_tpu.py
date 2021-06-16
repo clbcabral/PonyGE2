@@ -82,7 +82,7 @@ class paper_eurosat_tpu(base_ff):
         tpu = tf.distribute.cluster_resolver.TPUClusterResolver.connect()
 
         # instantiate a distribution strategy
-        tpu_strategy = tf.distribute.experimental.TPUStrategy(tpu)
+        tpu_strategy = tf.distribute.TPUStrategy(tpu)
 
         with tpu_strategy.scope():
 
