@@ -78,11 +78,15 @@ class paper_eurosat_tpu(base_ff):
 
     def build_model(self, phenotype):
 
-        # detect and init the TPU
-        tpu = tf.distribute.cluster_resolver.TPUClusterResolver.connect()
+        # # detect and init the TPU
+        # tpu = tf.distribute.cluster_resolver.TPUClusterResolver.connect()
 
-        # instantiate a distribution strategy
-        tpu_strategy = tf.distribute.TPUStrategy(tpu)
+        # # instantiate a distribution strategy
+        # tpu_strategy = tf.distribute.TPUStrategy(tpu)
+
+        resolver = tf.contrib.cluster_resolver.TPUClusterResolver
+        tf.contrib.distribute.initialize_tpu_system(resolver)
+        tpu_strategy = tf.contrib.distribute.TPUStrategy(resolver)
 
         with tpu_strategy.scope():
 
