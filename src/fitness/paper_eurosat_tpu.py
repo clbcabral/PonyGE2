@@ -27,10 +27,10 @@ class paper_eurosat_tpu(base_ff):
 
     def load_data(self):
         
-        dsnp = np.load('../../%s.npz' % params['DATASET_NAME'])
+        dsnp = np.load('/content/%s.npz' % params['DATASET_NAME'])
 
-        images = dsnp['image']
-        labels = dsnp['label']
+        images = dsnp['images']
+        labels = dsnp['labels']
 
         images = images.reshape((images.shape[0], 64, 64, 3))
         images = images.astype("float") / 255.0
@@ -78,66 +78,74 @@ class paper_eurosat_tpu(base_ff):
 
     def build_model(self, phenotype):
 
-        nconv, npool, nfc, nfcneuron = [int(i) for i in re.findall('\d+', phenotype.split('lr-')[0])]
-        has_dropout = 'dropout' in phenotype
-        has_batch_normalization = 'bnorm' in phenotype
-        has_pool = 'pool' in phenotype
-        learning_rate = float(phenotype.split('lr-')[1])
+        # detect and init the TPU
+        tpu = tf.distribute.cluster_resolver.TPUClusterResolver.connect()
 
-        # number of filters
-        filter_size = 32
+        # instantiate a distribution strategy
+        tpu_strategy = tf.distribute.experimental.TPUStrategy(tpu)
 
-        model = models.Sequential()
-        model.add(layers.InputLayer(input_shape=(64, 64, 3)))
+        with tpu_strategy.scope():
 
-        # Pooling
-        for i in range(npool):
+            nconv, npool, nfc, nfcneuron = [int(i) for i in re.findall('\d+', phenotype.split('lr-')[0])]
+            has_dropout = 'dropout' in phenotype
+            has_batch_normalization = 'bnorm' in phenotype
+            has_pool = 'pool' in phenotype
+            learning_rate = float(phenotype.split('lr-')[1])
 
-            # Convolutions
-            for j in range(nconv):
+            # number of filters
+            filter_size = 32
 
-                model.add(layers.Conv2D(filter_size, (3, 3), activation='relu', padding='same'))
+            model = models.Sequential()
+            model.add(layers.InputLayer(input_shape=(64, 64, 3)))
 
-                # Duplicate number of filters for each two convolutions
-                if (((i + j) % 2) == 1): filter_size = filter_size * 2
+            # Pooling
+            for i in range(npool):
 
-                # Add batch normalization
-                if has_batch_normalization:
-                    model.add(layers.BatchNormalization())
+                # Convolutions
+                for j in range(nconv):
 
-            # Add pooling
-            if has_pool:
-                model.add(layers.MaxPooling2D(pool_size=(2, 2)))
-                # Add dropout
-                if has_dropout:
-                    model.add(layers.Dropout(0.25))
+                    model.add(layers.Conv2D(filter_size, (3, 3), activation='relu', padding='same'))
 
-        model.add(layers.Flatten())
+                    # Duplicate number of filters for each two convolutions
+                    if (((i + j) % 2) == 1): filter_size = filter_size * 2
 
-        # fully connected
-        for i in range(nfc):
-            model.add(layers.Dense(nfcneuron))
-            model.add(layers.Activation('relu'))
+                    # Add batch normalization
+                    if has_batch_normalization:
+                        model.add(layers.BatchNormalization())
 
-        if has_dropout:
-            model.add(layers.Dropout(0.5))
+                # Add pooling
+                if has_pool:
+                    model.add(layers.MaxPooling2D(pool_size=(2, 2)))
+                    # Add dropout
+                    if has_dropout:
+                        model.add(layers.Dropout(0.25))
 
-        model.add(layers.Dense(10, activation='softmax'))
-        model.summary()
+            model.add(layers.Flatten())
 
-        opt = optimizers.Adam(learning_rate=learning_rate)
+            # fully connected
+            for i in range(nfc):
+                model.add(layers.Dense(nfcneuron))
+                model.add(layers.Activation('relu'))
 
-        # F1 Score metric function
-        def f1_score(y_true, y_pred):
-            true_positives = K.sum(K.round(K.clip(y_true * y_pred, 0, 1)))
-            possible_positives = K.sum(K.round(K.clip(y_true, 0, 1)))
-            predicted_positives = K.sum(K.round(K.clip(y_pred, 0, 1)))
-            precision = true_positives / (predicted_positives + K.epsilon())
-            recall = true_positives / (possible_positives + K.epsilon())
-            f1_val = 2 * (precision * recall) / (precision + recall + K.epsilon())
-            return f1_val
+            if has_dropout:
+                model.add(layers.Dropout(0.5))
 
-        model.compile(loss='categorical_crossentropy', optimizer=opt, metrics=['accuracy', f1_score])
+            model.add(layers.Dense(10, activation='softmax'))
+            model.summary()
+
+            opt = optimizers.Adam(learning_rate=learning_rate)
+
+            # F1 Score metric function
+            def f1_score(y_true, y_pred):
+                true_positives = K.sum(K.round(K.clip(y_true * y_pred, 0, 1)))
+                possible_positives = K.sum(K.round(K.clip(y_true, 0, 1)))
+                predicted_positives = K.sum(K.round(K.clip(y_pred, 0, 1)))
+                precision = true_positives / (predicted_positives + K.epsilon())
+                recall = true_positives / (possible_positives + K.epsilon())
+                f1_val = 2 * (precision * recall) / (precision + recall + K.epsilon())
+                return f1_val
+
+            model.compile(loss='categorical_crossentropy', optimizer=opt, metrics=['accuracy', f1_score])
 
         return model
 
