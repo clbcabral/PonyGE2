@@ -171,7 +171,7 @@ class paper_eurosat_tpu(base_ff):
             model.fit(train_ds,
                 epochs=70, 
                 batch_size=batch_size, 
-                verbose=1,
+                verbose=0,
                 validation_data=validation_ds,
                 callbacks=[es])
             
