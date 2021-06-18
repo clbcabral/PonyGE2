@@ -27,7 +27,7 @@ class paper_eurosat_tpu(base_ff):
 
     def load_data(self):
         
-        dsnp = np.load('/content/%s.npz' % params['DATASET_NAME'])
+        dsnp = np.load('../../%s.npz' % params['DATASET_NAME'])
 
         images = dsnp['images']
         labels = dsnp['labels']
