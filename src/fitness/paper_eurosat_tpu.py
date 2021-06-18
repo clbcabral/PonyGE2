@@ -78,13 +78,7 @@ class paper_eurosat_tpu(base_ff):
 
     def build_model(self, phenotype):
 
-        # detect and init the TPU
-        tpu = tf.distribute.cluster_resolver.TPUClusterResolver.connect()
-
-        # instantiate a distribution strategy
-        tpu_strategy = tf.distribute.experimental.TPUStrategy(tpu)
-
-        with tpu_strategy.scope():
+        with self.tpu_strategy.scope():
 
             nconv, npool, nfc, nfcneuron = [int(i) for i in re.findall('\d+', phenotype.split('lr-')[0])]
             has_dropout = 'dropout' in phenotype
